@@ -8,13 +8,29 @@
 import SwiftUI
 
 @main
-struct TZMatveeva_2025_07_08App: App {
-    let persistenceController = PersistenceController.shared
+struct SportTimerApp: App {
+    let persistenceController = CoreDataStack.shared
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            TabView {
+                HomeView()
+                    .tabItem {
+                        Label("Home", systemImage: "house")
+                    }
+                TimerView()
+                    .tabItem {
+                        Label("Timer", systemImage: "timer")
+                    }
+                HistoryView() // добавим позже
+                    .tabItem {
+                        Label("History", systemImage: "clock.arrow.circlepath")
+                    }
+                ProfileView() // добавим позже
+                    .tabItem {
+                        Label("Profile", systemImage: "person.crop.circle")
+                    }
+            }
         }
     }
 }
