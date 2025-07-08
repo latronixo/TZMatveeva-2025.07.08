@@ -28,7 +28,7 @@ final class HomeViewModel: ObservableObject {
     }
 
     func fetchStats() {
-        let request: NSFetchRequest<Workout> = Workout.fetchRequest()
+        let request = NSFetchRequest<Workout>(entityName: "Workout")
         do {
             let workouts = try context.fetch(request)
             totalWorkouts = workouts.count

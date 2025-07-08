@@ -16,7 +16,7 @@ final class HistoryViewModel: ObservableObject {
     private let context = CoreDataStack.shared.context
 
     func fetchWorkouts() {
-        let request: NSFetchRequest<Workout> = Workout.fetchRequest()
+        let request = NSFetchRequest<Workout>(entityName: "Workout")
         do {
             workouts = try context.fetch(request)
             filterWorkouts()

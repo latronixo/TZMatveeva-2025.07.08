@@ -26,7 +26,7 @@ struct SportTimerApp: App {
                     .tabItem {
                         Label("History", systemImage: "clock.arrow.circlepath")
                     }
-                ProfileView() // добавим позже
+                ProfileView()
                     .tabItem {
                         Label("Profile", systemImage: "person.crop.circle")
                     }
