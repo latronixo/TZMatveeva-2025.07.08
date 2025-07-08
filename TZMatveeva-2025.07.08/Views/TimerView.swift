@@ -42,8 +42,12 @@ struct TimerView: View {
 
                 HStack(spacing: 16) {
                     Button(vm.isRunning ? "Пауза" : "Старт") {
-                        vm.isRunning ? vm.pause() : vm.start()
+                        withAnimation {
+                            vm.isRunning ? vm.pause() : vm.start()
+                        }
                     }
+                    .scaleEffect(vm.isRunning ? 1.2 : 1)
+                    .animation(.spring(), value: vm.isRunning)
                     .buttonStyle(.borderedProminent)
                     .tint(vm.isRunning ? .orange : .green)
 

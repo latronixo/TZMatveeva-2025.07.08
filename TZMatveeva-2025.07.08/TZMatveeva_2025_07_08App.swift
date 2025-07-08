@@ -22,7 +22,7 @@ struct SportTimerApp: App {
                     .tabItem {
                         Label("Timer", systemImage: "timer")
                     }
-                HistoryView() // добавим позже
+                HistoryView() 
                     .tabItem {
                         Label("History", systemImage: "clock.arrow.circlepath")
                     }

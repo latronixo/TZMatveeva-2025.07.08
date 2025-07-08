@@ -5,35 +5,61 @@
 //  Created by Валентин on 08.07.2025.
 //
 
-import Foundation
-import SwiftUI
+import UserNotifications
+import UIKit
 
 final class TimerViewModel: ObservableObject {
     @Published var isRunning = false
     @Published var elapsedSeconds: Int = 0
     @Published var workoutType: WorkoutType = .strength
     @Published var notes: String = ""
-
     private var timer: Timer?
+
     private let context = CoreDataStack.shared.context
+    
+    var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
+
+    init() {
+        requestNotificationPermission()
+    }
+
+    func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+            if let error = error {
+                print("❌ Ошибка разрешения уведомлений: \(error)")
+            }
+        }
+    }
 
     func start() {
         isRunning = true
+        backgroundTaskID = UIApplication.shared.beginBackgroundTask {
+            self.endBackgroundTask()
+        }
+        sendNotification(title: "Тренировка началась", body: "Ваш таймер для тренировки начался.")
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
             self.elapsedSeconds += 1
         }
     }
-
+    
+    func endBackgroundTask() {
+        UIApplication.shared.endBackgroundTask(backgroundTaskID)
+        backgroundTaskID = .invalid
+    }
+    
     func pause() {
         isRunning = false
+        sendNotification(title: "Тренировка приостановлена", body: "Вы приостановили тренировку.")
         timer?.invalidate()
     }
 
     func reset() {
-        pause()
+        sendNotification(title: "Тренировка завершена", body: "Тренировка завершена и сохранена.")
+        isRunning = false
         elapsedSeconds = 0
         workoutType = .strength
         notes = ""
+        timer?.invalidate()
     }
 
     func saveWorkout() {
@@ -52,6 +78,16 @@ final class TimerViewModel: ObservableObject {
         }
 
         reset()
+    }
+
+    func sendNotification(title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = UNNotificationSound.default
+
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request)
     }
 
     var formattedTime: String {
