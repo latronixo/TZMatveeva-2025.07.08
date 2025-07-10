@@ -8,6 +8,7 @@
 import Foundation
 import CoreData
 
+@MainActor
 final class HomeViewModel: ObservableObject {
     @Published var totalWorkouts = 0
     @Published var totalDuration: Int32 = 0

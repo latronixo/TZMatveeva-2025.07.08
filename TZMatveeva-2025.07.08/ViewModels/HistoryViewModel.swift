@@ -8,6 +8,7 @@
 import Foundation
 import CoreData
 
+@MainActor
 final class HistoryViewModel: ObservableObject {
     @Published var workouts: [Workout] = []
     @Published var searchText: String = ""
@@ -26,8 +27,9 @@ final class HistoryViewModel: ObservableObject {
     }
 
     func deleteWorkout(at offsets: IndexSet) {
+        let items = filteredWorkouts
         offsets.forEach { index in
-            let workout = workouts[index]
+            let workout = items[index]
             context.delete(workout)
         }
         do {

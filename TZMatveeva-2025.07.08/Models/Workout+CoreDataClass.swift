@@ -9,8 +9,8 @@ import CoreData
 
 class Workout: NSManagedObject, Identifiable {
     @NSManaged var id: UUID
-    @NSManaged var type: String         // Тип тренировки
-    @NSManaged var duration: Int32      // Длительность в секундах
-    @NSManaged var date: Date           // Дата тренировки
-    @NSManaged var notes: String?       // Заметки
+    @NSManaged var type: String
+    @NSManaged var duration: Int32
+    @NSManaged var date: Date
+    @NSManaged var notes: String?       
 }

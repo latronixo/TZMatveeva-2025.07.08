@@ -8,15 +8,15 @@
 import UserNotifications
 import UIKit
 
+@MainActor
 final class TimerViewModel: ObservableObject {
     @Published var isRunning = false
     @Published var elapsedSeconds: Int = 0
     @Published var workoutType: WorkoutType = .strength
     @Published var notes: String = ""
-    private var timer: Timer?
-
-    private let context = CoreDataStack.shared.context
     
+    private var timer: Timer?
+    private let context = CoreDataStack.shared.context
     var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
 
     init() {
@@ -33,13 +33,21 @@ final class TimerViewModel: ObservableObject {
 
     func start() {
         isRunning = true
+        
         backgroundTaskID = UIApplication.shared.beginBackgroundTask {
-            self.endBackgroundTask()
+            Task { @MainActor in
+                self.endBackgroundTask()
+            }
         }
+
         sendNotification(title: "Тренировка началась", body: "Ваш таймер для тренировки начался.")
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { _ in
-            self.elapsedSeconds += 1
-        }
+        
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                self.elapsedSeconds += 1
+            }
+         }
     }
     
     func endBackgroundTask() {
