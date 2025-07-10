@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HomeView: View {
     @StateObject var vm = HomeViewModel()
+    @Binding var selectedTab: Int
 
     var body: some View {
         NavigationStack {
@@ -22,10 +23,11 @@ struct HomeView: View {
                     }
                     Spacer()
                 }
-
+                
                 Button("Начать тренировку") {
-                    // Навигация
+                    selectedTab = 1
                 }
+                .buttonStyle(.borderedProminent)
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
                 .background(Color.blue)
@@ -47,5 +49,5 @@ struct HomeView: View {
 }
 
 #Preview {
-    HomeView()
+    HomeView(selectedTab: .constant(0))
 }

@@ -6,7 +6,7 @@
 //
 
 import UserNotifications
-import UIKit
+import SwiftUI
 
 @MainActor
 final class TimerViewModel: ObservableObject {

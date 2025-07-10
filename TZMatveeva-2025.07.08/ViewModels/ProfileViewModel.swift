@@ -5,8 +5,8 @@
 //  Created by Валентин on 08.07.2025.
 //
 
+import Foundation
 import CoreData
-import SwiftUI
 
 @MainActor
 final class ProfileViewModel: ObservableObject {
