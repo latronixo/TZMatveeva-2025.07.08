@@ -12,68 +12,76 @@ import SwiftUI
 @MainActor
 final class TimerViewModel: ObservableObject {
     @Published var isRunning = false
-    @Published var elapsedSeconds: Int = 0
+    @Published var totalTime: Int {
+        didSet {
+            UserDefaults.standard.set(totalTime, forKey: "totalTime")
+        }
+    }
+    @Published var remainingSeconds: Int
     @Published var workoutType: WorkoutType = .strength
     @Published var notes: String = ""
-    
+    @Published var isEditingTime = false
+
     private var timer: Timer?
     private let context = CoreDataStack.shared.context
     var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
 
     init() {
+        let saved = UserDefaults.standard.integer(forKey: "totalTime")
+        let totalTime = saved > 0 ? saved : 300 // по умолчанию 5 минут
+        self.totalTime = totalTime
+        self.remainingSeconds = totalTime
     }
 
     func requestNotificationPermission() {
         Task.detached {
-                let center = UNUserNotificationCenter.current()
-                let settings = await center.notificationSettings()
+            let center = UNUserNotificationCenter.current()
+            let settings = await center.notificationSettings()
 
-                guard settings.authorizationStatus == .notDetermined else {
-                    print("🔔 Уведомления уже запрошены: \(settings.authorizationStatus.rawValue)")
-                    return
-                }
-
-                do {
-                    let granted = try await center.requestAuthorization(options: [.alert, .sound])
-                    print("🔔 Уведомления разрешены: \(granted)")
-                } catch {
-                    print("❌ Ошибка разрешения уведомлений: \(error)")
-                }
+            guard settings.authorizationStatus == .notDetermined else {
+                return
             }
-    }
 
+            do {
+                let granted = try await center.requestAuthorization(options: [.alert, .sound])
+                print("🔔 Уведомления разрешены: \(granted)")
+            } catch {
+                print("❌ Ошибка разрешения уведомлений: \(error)")
+            }
+        }
+    }
 
     func start() {
         isRunning = true
-        
-        playSound(id: 1005)
-        
+        isEditingTime = false
+        playSound(id: 1016)
+
         backgroundTaskID = UIApplication.shared.beginBackgroundTask {
             Task { @MainActor in
                 self.endBackgroundTask()
             }
         }
 
-        sendNotification(title: "Тренировка началась", body: "Ваш таймер для тренировки начался.")
-        
+        sendNotification(title: "Тренировка началась", body: "Таймер запущен.")
+
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
-                self.elapsedSeconds += 1
+                if self.remainingSeconds > 0 {
+                    self.remainingSeconds -= 1
+                } else {
+                    self.timer?.invalidate()
+                    self.isRunning = false
+                    self.playSound(id: 1005)
+                    self.sendNotification(title: "Тренировка завершена", body: "Время вышло.")
+                }
             }
-         }
+        }
     }
-    
-    func endBackgroundTask() {
-        UIApplication.shared.endBackgroundTask(backgroundTaskID)
-        backgroundTaskID = .invalid
-    }
-    
+
     func pause() {
         isRunning = false
-        
-        playSound(id: 1016)
-        
+        playSound(id: 1007)
         sendNotification(title: "Тренировка приостановлена", body: "Вы приостановили тренировку.")
         timer?.invalidate()
     }
@@ -83,9 +91,9 @@ final class TimerViewModel: ObservableObject {
             playSound(id: 1007)
             isRunning = false
         }
-        
+
         sendNotification(title: "Тренировка завершена", body: "Тренировка завершена и сохранена.")
-        elapsedSeconds = 0
+        remainingSeconds = totalTime
         workoutType = .strength
         notes = ""
         timer?.invalidate()
@@ -93,11 +101,11 @@ final class TimerViewModel: ObservableObject {
 
     func saveWorkout() {
         isRunning = false
-        
+
         let workout = Workout(context: context)
         workout.id = UUID()
         workout.date = Date()
-        workout.duration = Int32(elapsedSeconds)
+        workout.duration = Int32(totalTime - remainingSeconds)
         workout.type = workoutType.rawValue
         workout.notes = notes
 
@@ -121,18 +129,31 @@ final class TimerViewModel: ObservableObject {
     }
 
     var formattedTime: String {
-        let h = elapsedSeconds / 3600
-        let m = (elapsedSeconds % 3600) / 60
-        let s = elapsedSeconds % 60
+        let h = remainingSeconds / 3600
+        let m = (remainingSeconds % 3600) / 60
+        let s = remainingSeconds % 60
         return h > 0 ? String(format: "%02d:%02d:%02d", h, m, s)
                      : String(format: "%02d:%02d", m, s)
     }
 
     var progress: Double {
-        min(Double(elapsedSeconds % 60) / 60.0, 1.0)
+        totalTime > 0 ? Double(totalTime - remainingSeconds) / Double(totalTime) : 0
     }
     
+    var resetDisabled: Bool {
+        isRunning == false && notes == "" && remainingSeconds == totalTime
+    }
+    
+    var saveDisabled: Bool {
+        isRunning || totalTime == 0 || remainingSeconds == totalTime
+    }
+
     private func playSound(id: SystemSoundID) {
         AudioServicesPlaySystemSound(id)
+    }
+
+    func endBackgroundTask() {
+        UIApplication.shared.endBackgroundTask(backgroundTaskID)
+        backgroundTaskID = .invalid
     }
 }

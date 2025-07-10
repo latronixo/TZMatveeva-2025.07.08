@@ -13,8 +13,77 @@ struct TimerView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
-                Text(vm.formattedTime)
-                    .font(.system(size: 48, weight: .bold, design: .monospaced))
+                VStack {
+                    if vm.isEditingTime {
+                        HStack(spacing: 16) {
+                            HStack(spacing: 0) {
+                                Picker("", selection: Binding(
+                                    get: { vm.totalTime / 3600 },
+                                    set: {
+                                        let minutes = (vm.totalTime % 3600) / 60
+                                        let seconds = vm.totalTime % 60
+                                        vm.totalTime = $0 * 3600 + minutes * 60 + seconds
+                                        vm.remainingSeconds = vm.totalTime
+                                    })) {
+                                    ForEach(0..<24) { hour in
+                                        Text("\(hour) ч").tag(hour)
+                                    }
+                                }
+                                .pickerStyle(.wheel)
+                                .frame(width: 80)
+
+                                Picker("", selection: Binding(
+                                    get: { (vm.totalTime % 3600) / 60 },
+                                    set: {
+                                        let hours = vm.totalTime / 3600
+                                        let seconds = vm.totalTime % 60
+                                        vm.totalTime = hours * 3600 + $0 * 60 + seconds
+                                        vm.remainingSeconds = vm.totalTime
+                                    })) {
+                                    ForEach(0..<60) { minute in
+                                        Text("\(minute) мин").tag(minute)
+                                    }
+                                }
+                                .pickerStyle(.wheel)
+                                .frame(width: 80)
+
+                                Picker("", selection: Binding(
+                                    get: { vm.totalTime % 60 },
+                                    set: {
+                                        let hours = vm.totalTime / 3600
+                                        let minutes = (vm.totalTime % 3600) / 60
+                                        vm.totalTime = hours * 3600 + minutes * 60 + $0
+                                        vm.remainingSeconds = vm.totalTime
+                                    })) {
+                                    ForEach(0..<60) { second in
+                                        Text("\(second) сек").tag(second)
+                                    }
+                                }
+                                .pickerStyle(.wheel)
+                                .frame(width: 80)
+                            }
+                            .frame(height: 150)
+
+                            Button("OK") {
+                                withAnimation {
+                                    vm.isEditingTime = false
+                                    vm.remainingSeconds = vm.totalTime
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.blue)
+                        }
+                    } else {
+                        Text(vm.formattedTime)
+                            .font(.system(size: 48, weight: .bold, design: .monospaced))
+                            .onTapGesture {
+                                if !vm.isRunning {
+                                    vm.isEditingTime = true
+                                }
+                            }
+                    }
+                }
+
 
                 ZStack {
                     Circle()
@@ -56,14 +125,14 @@ struct TimerView: View {
                     }
                     .buttonStyle(.bordered)
                     .tint(.red)
-                    .disabled(vm.isRunning == false && vm.notes == "")
+                    .disabled(vm.resetDisabled)
 
                     Button("Сохранить") {
                         vm.saveWorkout()
                     }
                     .buttonStyle(.bordered)
                     .tint(.blue)
-                    .disabled(vm.isRunning || vm.elapsedSeconds == 0)
+                    .disabled(vm.saveDisabled)
                 }
 
                 Spacer()
