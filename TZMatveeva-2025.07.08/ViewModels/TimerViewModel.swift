@@ -20,7 +20,7 @@ final class TimerViewModel: ObservableObject {
     var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
 
     init() {
-        requestNotificationPermission()
+        //requestNotificationPermission()
     }
 
     func requestNotificationPermission() {

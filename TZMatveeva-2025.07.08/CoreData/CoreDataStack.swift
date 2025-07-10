@@ -12,7 +12,7 @@ final class CoreDataStack {
     let container: NSPersistentContainer
 
     private init() {
-        container = NSPersistentContainer(name: "SportTimerModel")
+        container = NSPersistentContainer(name: "TZMatveeva_2025_07_08")
         container.loadPersistentStores { _, error in
             if let error = error { fatalError("Core Data failed: \(error)") }
         }

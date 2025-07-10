@@ -7,11 +7,11 @@
 
 import Foundation
 
-enum WorkoutType: String, CaseIterable, Identifiable {
+enum WorkoutType: String, CaseIterable, Identifiable, Hashable {
     var id: String { rawValue }
-    case strength = "Strength"
-    case cardio = "Cardio"
-    case yoga = "Yoga"
-    case stretching = "Stretching"
-    case other = "Other"
+    case strength = "Силовая тренировка"
+    case cardio = "Кардио"
+    case yoga = "Йога"
+    case stretching = "Растяжка"
+    case other = "Другое"
 }
