@@ -149,6 +149,8 @@ final class TimerViewModel: ObservableObject {
     }
 
     private func playSound(id: SystemSoundID) {
+        let isEnabled = UserDefaults.standard.bool(forKey: "timer_sounds_enabled")
+        guard isEnabled else { return }
         AudioServicesPlaySystemSound(id)
     }
 

@@ -21,10 +21,16 @@ final class ProfileViewModel: ObservableObject {
             UserDefaults.standard.set(selectedTheme.rawValue, forKey: themeKey)
         }
     }
-
     private let themeKey = "app_theme"
-
+    
     private let context: NSManagedObjectContext
+    
+    private let soundKey = "timer_sounds_enabled"
+    @Published var isSoundEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(isSoundEnabled, forKey: soundKey)
+        }
+    }
 
     @MainActor
     init() {
@@ -34,6 +40,8 @@ final class ProfileViewModel: ObservableObject {
         // Инициализация темы из UserDefaults
         let savedTheme = UserDefaults.standard.string(forKey: themeKey)
         self.selectedTheme = AppTheme(rawValue: savedTheme ?? "") ?? .system
+        
+        self.isSoundEnabled = UserDefaults.standard.bool(forKey: soundKey)
     }
 
     @MainActor

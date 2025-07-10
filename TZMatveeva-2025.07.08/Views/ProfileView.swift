@@ -75,6 +75,8 @@ struct ProfileView: View {
                             }
                         }
                         .pickerStyle(.segmented)
+                        
+                        Toggle("Звуки таймера", isOn: $vm.isSoundEnabled)
 
                         Button("Очистить все данные", role: .destructive) {
                             showClearAlert = true
