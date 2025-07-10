@@ -8,13 +8,38 @@
 import Foundation
 import CoreData
 
-@MainActor
 final class ProfileViewModel: ObservableObject {
     @Published var totalDuration: Int = 0
     @Published var totalWorkouts: Int = 0
+    
+    @Published var avatarData: Data?
+    private var avatarKey = "user_avatar"
 
-    let context = CoreDataStack.shared.context
+    private let context: NSManagedObjectContext
+    
+    @MainActor
+    init() {
+        self.context = CoreDataStack.shared.context
+        loadAvatar()
+    }
 
+    private func loadAvatar() {
+          avatarData = UserDefaults.standard.data(forKey: avatarKey)
+    }
+    
+    @MainActor
+    func saveAvatarData(_ data: Data) {
+        avatarData = data
+        UserDefaults.standard.set(data, forKey: avatarKey)
+    }
+    
+    @MainActor
+    func clearAvatar() {
+        avatarData = nil
+        UserDefaults.standard.removeObject(forKey: avatarKey)
+    }
+    
+    @MainActor
     func fetchStats() {
         let request = NSFetchRequest<Workout>(entityName: "Workout")
         do {
@@ -26,6 +51,7 @@ final class ProfileViewModel: ObservableObject {
         }
     }
 
+    @MainActor
     func clearAllData() {
         let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Workout.fetchRequest()
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)

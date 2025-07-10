@@ -10,8 +10,7 @@ import PhotosUI
 
 struct ProfileView: View {
     @StateObject private var vm = ProfileViewModel()
-    @State private var avatarImage: UIImage?
-    @State private var showPhotoPicker = false
+    @State private var selectedPhoto: PhotosPickerItem?
     @State private var showClearAlert = false
 
     var body: some View {
@@ -19,11 +18,13 @@ struct ProfileView: View {
             ScrollView {
                 VStack(spacing: 20) {
                     // Аватар
-                    Button {
-                        showPhotoPicker = true
-                    } label: {
-                        if let image = avatarImage {
-                            Image(uiImage: image)
+                    let currentAvatar = vm.avatarData
+
+                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                        // работаем с локальным currentAvatar, а не напрямую с vm
+                        if let data = currentAvatar,
+                           let uiImage = UIImage(data: data) {
+                            Image(uiImage: uiImage)
                                 .resizable()
                                 .frame(width: 100, height: 100)
                                 .clipShape(Circle())
@@ -33,11 +34,18 @@ struct ProfileView: View {
                             Circle()
                                 .fill(Color.gray.opacity(0.3))
                                 .frame(width: 100, height: 100)
-                                .overlay(Image(systemName: "camera.fill")
-                                    .font(.title)
-                                    .foregroundColor(.gray))
+                                .overlay(
+                                    Image(systemName: "camera.fill")
+                                        .font(.title)
+                                        .foregroundColor(.gray)
+                                )
                         }
                     }
+                    
+                    Button("Удалить аватар", role: .destructive) {
+                        vm.clearAvatar()
+                    }
+                    .disabled(vm.avatarData == nil)
 
                     // Общая статистика
                     VStack(alignment: .leading, spacing: 8) {
@@ -85,24 +93,37 @@ struct ProfileView: View {
             }
             .navigationTitle("Профиль")
             .onAppear {
-                vm.fetchStats()
+                Task {
+                    vm.fetchStats()
+                }
             }
-            .photosPicker(isPresented: $showPhotoPicker, selection: .constant(nil))
             .alert("Очистить все данные?", isPresented: $showClearAlert) {
                 Button("Удалить", role: .destructive) {
-                    vm.clearAllData()
+                    Task {
+                        vm.clearAllData()
+                    }
                 }
                 Button("Отмена", role: .cancel) {}
+            }
+            .onChange(of: selectedPhoto) { oldValue, newValue in
+                if let item = newValue {
+                    Task {
+                        if let data = try? await item.loadTransferable(type: Data.self) {
+                            vm.saveAvatarData(data)
+                        }
+                    }
+                }
             }
         }
     }
 
-    func formatDuration(_ seconds: Int) -> String {
+    private func formatDuration(_ seconds: Int) -> String {
         let h = seconds / 3600
         let m = (seconds % 3600) / 60
         let s = seconds % 60
-        return h > 0 ? String(format: "%02d:%02d:%02d", h, m, s)
-                     : String(format: "%02d:%02d", m, s)
+        return h > 0
+            ? String(format: "%02d:%02d:%02d", h, m, s)
+            : String(format: "%02d:%02d", m, s)
     }
 }
 
