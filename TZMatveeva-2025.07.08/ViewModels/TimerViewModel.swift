@@ -5,6 +5,7 @@
 //  Created by Валентин on 08.07.2025.
 //
 
+import AVFoundation
 import UserNotifications
 import SwiftUI
 
@@ -45,6 +46,8 @@ final class TimerViewModel: ObservableObject {
     func start() {
         isRunning = true
         
+        playSound(id: 1005)
+        
         backgroundTaskID = UIApplication.shared.beginBackgroundTask {
             Task { @MainActor in
                 self.endBackgroundTask()
@@ -68,13 +71,20 @@ final class TimerViewModel: ObservableObject {
     
     func pause() {
         isRunning = false
+        
+        playSound(id: 1016)
+        
         sendNotification(title: "Тренировка приостановлена", body: "Вы приостановили тренировку.")
         timer?.invalidate()
     }
 
     func reset() {
+        if isRunning {
+            playSound(id: 1007)
+            isRunning = false
+        }
+        
         sendNotification(title: "Тренировка завершена", body: "Тренировка завершена и сохранена.")
-        isRunning = false
         elapsedSeconds = 0
         workoutType = .strength
         notes = ""
@@ -82,6 +92,8 @@ final class TimerViewModel: ObservableObject {
     }
 
     func saveWorkout() {
+        isRunning = false
+        
         let workout = Workout(context: context)
         workout.id = UUID()
         workout.date = Date()
@@ -91,7 +103,6 @@ final class TimerViewModel: ObservableObject {
 
         do {
             try context.save()
-            print("✅ Тренировка сохранена")
         } catch {
             print("❌ Ошибка сохранения: \(error)")
         }
@@ -119,5 +130,9 @@ final class TimerViewModel: ObservableObject {
 
     var progress: Double {
         min(Double(elapsedSeconds % 60) / 60.0, 1.0)
+    }
+    
+    private func playSound(id: SystemSoundID) {
+        AudioServicesPlaySystemSound(id)
     }
 }

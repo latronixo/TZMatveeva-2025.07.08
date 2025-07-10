@@ -36,7 +36,7 @@ struct TimerView: View {
                 }
                 .pickerStyle(.menu)
 
-                TextField("Заметки о тренировке", text: $vm.notes)
+                TextField("Заметки о тренировке", text: $vm.notes, axis: .vertical)
                     .textFieldStyle(.roundedBorder)
                     .padding(.horizontal)
 
@@ -56,12 +56,14 @@ struct TimerView: View {
                     }
                     .buttonStyle(.bordered)
                     .tint(.red)
+                    .disabled(vm.isRunning == false && vm.notes == "")
 
                     Button("Сохранить") {
                         vm.saveWorkout()
                     }
                     .buttonStyle(.bordered)
                     .tint(.blue)
+                    .disabled(vm.isRunning || vm.elapsedSeconds == 0)
                 }
 
                 Spacer()
