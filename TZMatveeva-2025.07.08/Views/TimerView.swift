@@ -69,6 +69,9 @@ struct TimerView: View {
             .padding()
             .navigationTitle("Таймер")
         }
+        .onAppear {
+            vm.requestNotificationPermission()
+        }
     }
 }
 

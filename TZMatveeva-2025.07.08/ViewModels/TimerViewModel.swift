@@ -20,16 +20,27 @@ final class TimerViewModel: ObservableObject {
     var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
 
     init() {
-        //requestNotificationPermission()
     }
 
     func requestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
-            if let error = error {
-                print("❌ Ошибка разрешения уведомлений: \(error)")
+        Task.detached {
+                let center = UNUserNotificationCenter.current()
+                let settings = await center.notificationSettings()
+
+                guard settings.authorizationStatus == .notDetermined else {
+                    print("🔔 Уведомления уже запрошены: \(settings.authorizationStatus.rawValue)")
+                    return
+                }
+
+                do {
+                    let granted = try await center.requestAuthorization(options: [.alert, .sound])
+                    print("🔔 Уведомления разрешены: \(granted)")
+                } catch {
+                    print("❌ Ошибка разрешения уведомлений: \(error)")
+                }
             }
-        }
     }
+
 
     func start() {
         isRunning = true
