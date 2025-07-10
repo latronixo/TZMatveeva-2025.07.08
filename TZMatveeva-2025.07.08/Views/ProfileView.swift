@@ -21,7 +21,6 @@ struct ProfileView: View {
                     let currentAvatar = vm.avatarData
 
                     PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                        // работаем с локальным currentAvatar, а не напрямую с vm
                         if let data = currentAvatar,
                            let uiImage = UIImage(data: data) {
                             Image(uiImage: uiImage)
@@ -41,11 +40,16 @@ struct ProfileView: View {
                                 )
                         }
                     }
-                    
-                    Button("Удалить аватар", role: .destructive) {
-                        vm.clearAvatar()
+
+                    // Кнопка удаления аватара
+                    if vm.avatarData != nil {
+                        Button(role: .destructive) {
+                            vm.clearAvatar()
+                        } label: {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                        }
                     }
-                    .disabled(vm.avatarData == nil)
 
                     // Общая статистика
                     VStack(alignment: .leading, spacing: 8) {
@@ -56,21 +60,29 @@ struct ProfileView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
-                    .background(.white)
+                    .background(Color(.systemBackground))
                     .cornerRadius(12)
                     .shadow(radius: 2)
 
                     // Настройки
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Настройки")
                             .font(.headline)
+
+                        Picker("Тема", selection: $vm.selectedTheme) {
+                            ForEach(AppTheme.allCases) { theme in
+                                Text(theme.displayName).tag(theme)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+
                         Button("Очистить все данные", role: .destructive) {
                             showClearAlert = true
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
-                    .background(.white)
+                    .background(Color(.systemBackground))
                     .cornerRadius(12)
                     .shadow(radius: 2)
 
@@ -85,13 +97,14 @@ struct ProfileView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
-                    .background(.white)
+                    .background(Color(.systemBackground))
                     .cornerRadius(12)
                     .shadow(radius: 2)
                 }
                 .padding()
             }
             .navigationTitle("Профиль")
+            .preferredColorScheme(vm.selectedTheme.colorScheme)
             .onAppear {
                 Task {
                     vm.fetchStats()
@@ -105,7 +118,7 @@ struct ProfileView: View {
                 }
                 Button("Отмена", role: .cancel) {}
             }
-            .onChange(of: selectedPhoto) { oldValue, newValue in
+            .onChange(of: selectedPhoto) { _, newValue in
                 if let item = newValue {
                     Task {
                         if let data = try? await item.loadTransferable(type: Data.self) {
@@ -126,6 +139,7 @@ struct ProfileView: View {
             : String(format: "%02d:%02d", m, s)
     }
 }
+
 
 #Preview {
     ProfileView()

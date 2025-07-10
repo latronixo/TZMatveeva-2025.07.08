@@ -7,38 +7,47 @@
 
 import Foundation
 import CoreData
+import SwiftUI
 
 final class ProfileViewModel: ObservableObject {
     @Published var totalDuration: Int = 0
     @Published var totalWorkouts: Int = 0
-    
+
     @Published var avatarData: Data?
-    private var avatarKey = "user_avatar"
+    private let avatarKey = "user_avatar"
+
+    @Published var selectedTheme: AppTheme {
+        didSet {
+            UserDefaults.standard.set(selectedTheme.rawValue, forKey: themeKey)
+        }
+    }
+
+    private let themeKey = "app_theme"
 
     private let context: NSManagedObjectContext
-    
+
     @MainActor
     init() {
         self.context = CoreDataStack.shared.context
-        loadAvatar()
+        self.avatarData = UserDefaults.standard.data(forKey: avatarKey)
+
+        // Инициализация темы из UserDefaults
+        let savedTheme = UserDefaults.standard.string(forKey: themeKey)
+        self.selectedTheme = AppTheme(rawValue: savedTheme ?? "") ?? .system
     }
 
-    private func loadAvatar() {
-          avatarData = UserDefaults.standard.data(forKey: avatarKey)
-    }
-    
     @MainActor
     func saveAvatarData(_ data: Data) {
         avatarData = data
         UserDefaults.standard.set(data, forKey: avatarKey)
     }
-    
+
     @MainActor
     func clearAvatar() {
         avatarData = nil
         UserDefaults.standard.removeObject(forKey: avatarKey)
     }
-    
+
     @MainActor
     func fetchStats() {
         let request = NSFetchRequest<Workout>(entityName: "Workout")
@@ -68,5 +77,29 @@ final class ProfileViewModel: ObservableObject {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "N/A"
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "N/A"
         return "Версия \(version) (build \(build))"
+    }
+}
+
+enum AppTheme: String, CaseIterable, Identifiable {
+    case system
+    case light
+    case dark
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .system: return "Системная"
+        case .light: return "Светлая"
+        case .dark: return "Тёмная"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
     }
 }
