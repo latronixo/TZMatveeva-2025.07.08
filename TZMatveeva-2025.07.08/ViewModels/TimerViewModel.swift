@@ -122,21 +122,26 @@ final class TimerViewModel: ObservableObject {
     func saveWorkout() {
         isRunning = false
 
-        let workout = Workout(context: context)
-        workout.id = UUID()
-        workout.date = Date()
-        workout.duration = Int32(totalTime - remainingSeconds)
-        workout.type = workoutType.rawValue
-        workout.notes = notes
+        let context = CoreDataStack.shared.context
+        context.perform { [self] in
+            let workout = Workout(context: context)
+            workout.id = UUID()
+            workout.date = Date()
+            workout.duration = Int32(totalTime - remainingSeconds)
+            workout.type = workoutType.rawValue
+            workout.notes = notes
 
-        do {
-            try context.save()
-        } catch {
-            print("❌ Ошибка сохранения: \(error)")
+            do {
+                try context.save()
+            } catch {
+                print("❌ Ошибка сохранения: \(error)")
+            }
+
+            Task { @MainActor in
+                self.reset()
+                self.endBackgroundTask()
+            }
         }
-
-        reset()
-        endBackgroundTask()
     }
 
     func sendNotification(title: String, body: String) {
