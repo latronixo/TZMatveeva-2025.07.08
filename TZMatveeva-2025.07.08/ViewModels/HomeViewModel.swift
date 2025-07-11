@@ -34,12 +34,12 @@ final class HomeViewModel: ObservableObject {
 
     /// Асинхронный fetch статистики из Core Data
     func fetchStats(completion: @escaping (Int, Int32, [WorkoutDTO]) -> Void) {
-        let bgContext = CoreDataStack.shared.context
-        bgContext.perform {
+        let context = CoreDataStack.shared.container.newBackgroundContext()
+        context.perform {
             let request = NSFetchRequest<Workout>(entityName: "Workout")
             request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
             do {
-                let fetched = try bgContext.fetch(request)
+                let fetched = try context.fetch(request)
                 let dtos = fetched.map { workout in
                     WorkoutDTO(
                         id: workout.id,

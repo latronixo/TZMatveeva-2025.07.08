@@ -8,34 +8,45 @@
 import Foundation
 import CoreData
 
-@MainActor
 final class HistoryViewModel: ObservableObject {
     @Published var workouts: [Workout] = []
     @Published var searchText: String = ""
     @Published var filteredWorkouts: [Workout] = []
     @Published var groupedWorkouts: [String: [Workout]] = [:]
 
-    private let context = CoreDataStack.shared.context
-
-    func fetchWorkouts() {
-        let request = NSFetchRequest<Workout>(entityName: "Workout")
-        do {
-            workouts = try context.fetch(request)
-            filterWorkouts()
-        } catch {
-            print("❌ Ошибка получения тренировки: \(error)")
+    func fetchWorkouts(completion: @escaping ([Workout]) -> Void) {
+        let context = CoreDataStack.shared.container.newBackgroundContext()
+        context.perform {
+            let request = NSFetchRequest<Workout>(entityName: "Workout")
+            do {
+                let result = try context.fetch(request)
+                completion(result)
+            } catch {
+                print("❌ Ошибка получения тренировки: \(error)")
+                completion([])
+            }
         }
     }
 
-    func deleteWorkouts(_ workoutsToDelete: [Workout]) {
-        for workout in workoutsToDelete {
-            context.delete(workout)
-        }
-        do {
-            try context.save()
-            fetchWorkouts()
-        } catch {
-            print("❌ Ошибка удаления тренировки: \(error)")
+    func deleteWorkouts(_ workoutsToDelete: [Workout], completion: @escaping ([Workout]) -> Void) {
+        let context = CoreDataStack.shared.container.newBackgroundContext()
+        context.perform {
+            for workout in workoutsToDelete {
+                let objectID = workout.objectID
+                if let object = try? context.existingObject(with: objectID) {
+                    context.delete(object)
+                }
+            }
+            do {
+                try context.save()
+                // После удаления — fetchWorkouts в этом же контексте
+                let request = NSFetchRequest<Workout>(entityName: "Workout")
+                let result = try context.fetch(request)
+                completion(result)
+            } catch {
+                print("❌ Ошибка удаления тренировки: \(error)")
+                completion([])
+            }
         }
     }
 

@@ -5,57 +5,36 @@
 //  Created by Валентин on 08.07.2025.
 //
 
-import Foundation
 import CoreData
 import Combine
 import SwiftUI
 
-@MainActor
 final class ProfileViewModel: ObservableObject {
     @Published var totalDuration: Int = 0
     @Published var totalWorkouts: Int = 0
 
     @Published var avatarData: Data?
     private let avatarKey = "user_avatar"
+    private let soundKey = "timer_sounds_enabled"
+    @Published var isSoundEnabled: Bool
 
     @Published var selectedTheme: AppTheme {
         didSet {
-            if AppSettings.shared.selectedTheme != selectedTheme {
-                AppSettings.shared.selectedTheme = selectedTheme
-            }
+            let selectedScheme = selectedTheme
+                if AppSettings.shared.selectedTheme != selectedScheme {
+                    DispatchQueue.main.async {
+                         AppSettings.shared.selectedTheme = selectedScheme
+                     }
+                }
         }
     }
     
     private var cancellables = Set<AnyCancellable>()    //подписка
     
-    private let context: NSManagedObjectContext
-    
-    private let soundKey = "timer_sounds_enabled"
-    @Published var isSoundEnabled: Bool {
-        didSet {
-            UserDefaults.standard.set(isSoundEnabled, forKey: soundKey)
-        }
-    }
-
     init() {
-        self.context = CoreDataStack.shared.context
         self.avatarData = UserDefaults.standard.data(forKey: avatarKey)
-
-        // Инициализация темы из AppSettings
-        self.selectedTheme = AppSettings.shared.selectedTheme
-        
         self.isSoundEnabled = UserDefaults.standard.bool(forKey: soundKey)
-
-        // Подписываемся на изменения темы из AppSettings
-        AppSettings.shared.$selectedTheme
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] newTheme in
-                guard let self = self else { return }
-                if self.selectedTheme != newTheme {
-                    self.selectedTheme = newTheme
-                }
-            }
-            .store(in: &cancellables)
+        self.selectedTheme = AppSettings.shared.selectedTheme
     }
 
     func saveAvatarData(_ data: Data) {
@@ -68,26 +47,40 @@ final class ProfileViewModel: ObservableObject {
         UserDefaults.standard.removeObject(forKey: avatarKey)
     }
 
-    func fetchStats() {
-        let request = NSFetchRequest<Workout>(entityName: "Workout")
-        do {
-            let workouts = try context.fetch(request)
-            totalWorkouts = workouts.count
-            totalDuration = workouts.reduce(0) { $0 + Int($1.duration) }
-        } catch {
-            print("❌ Ошибка получения статистики: \(error)")
+    func fetchStats(completion: @escaping (Int, Int) -> Void) {
+        let context = CoreDataStack.shared.container.newBackgroundContext()
+        context.perform {
+            let request = NSFetchRequest<Workout>(entityName: "Workout")
+            do {
+                let workouts = try context.fetch(request)
+                let count = workouts.count
+                let total = workouts.reduce(0) { $0 + Int($1.duration) }
+                completion(count, total)
+            } catch {
+                print("❌ Ошибка получения статистики: \(error)")
+                completion(0, 0)
+            }
         }
     }
 
-    func clearAllData() {
-        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Workout.fetchRequest()
-        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-        do {
-            try context.execute(deleteRequest)
-            try context.save()
-            fetchStats()
-        } catch {
-            print("❌ Ошибка удаления всех данных: \(error)")
+    func clearAllData(completion: @escaping (Int, Int) -> Void) {
+        let context = CoreDataStack.shared.container.newBackgroundContext()
+        context.perform {
+            let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Workout.fetchRequest()
+            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+            do {
+                try context.execute(deleteRequest)
+                try context.save()
+                // После удаления — fetch статистики в этом же контексте
+                let request = NSFetchRequest<Workout>(entityName: "Workout")
+                let workouts = try context.fetch(request)
+                let count = workouts.count
+                let total = workouts.reduce(0) { $0 + Int($1.duration) }
+                completion(count, total)
+            } catch {
+                print("❌ Ошибка удаления всех данных: \(error)")
+                completion(0, 0)
+            }
         }
     }
 

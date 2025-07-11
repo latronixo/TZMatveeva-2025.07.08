@@ -8,8 +8,7 @@
 import SwiftUI
 import Combine
 
-@MainActor
-final class AppSettings: ObservableObject {
+final class AppSettings: ObservableObject, @unchecked Sendable {
     static let shared = AppSettings()
 
     @Published var selectedTheme: AppTheme {
@@ -25,3 +24,16 @@ final class AppSettings: ObservableObject {
         self.selectedTheme = AppTheme(rawValue: saved ?? "") ?? .system
     }
 }
+
+// Пример безопасного использования:
+// Для чтения:
+// let theme = AppSettings.shared.selectedTheme // можно из любого потока
+//
+// Для записи (только на главном потоке!):
+// DispatchQueue.main.async {
+//     AppSettings.shared.selectedTheme = .dark
+// }
+// или
+// Task { @MainActor in
+//     AppSettings.shared.selectedTheme = .dark
+// }

@@ -20,109 +20,32 @@ struct ProfileView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    // Аватар
-                    let currentAvatar = vm.avatarData
-
-                    PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                        if let data = currentAvatar,
-                           let uiImage = UIImage(data: data) {
-                            Image(uiImage: uiImage)
-                                .resizable()
-                                .frame(width: 100, height: 100)
-                                .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.primary, lineWidth: 2))
-                                .shadow(radius: 4)
-                        } else {
-                            Circle()
-                                .fill(Color.gray.opacity(0.3))
-                                .frame(width: 100, height: 100)
-                                .overlay(
-                                    Image(systemName: "camera.fill")
-                                        .font(.title)
-                                        .foregroundColor(.gray)
-                                )
-                        }
-                    }
-
-                    // Кнопка удаления аватара
-                    if vm.avatarData != nil {
-                        Button(role: .destructive) {
-                            vm.clearAvatar()
-                        } label: {
-                            Image(systemName: "trash")
-                                .foregroundColor(.red)
-                        }
-                    }
-
-                    // Общая статистика
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Общая статистика")
-                            .font(.headline)
-                        Text("Всего тренировок: \(vm.totalWorkouts)")
-                        Text("Общее время: \(formatDuration(vm.totalDuration))")
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    .shadow(radius: 2)
-
-                    // Настройки
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Настройки")
-                            .font(.headline)
-
-                        Section {
-                            Text("Тема")
-                            Picker("Тема", selection: $vm.selectedTheme) {
-                                ForEach(AppTheme.allCases) { theme in
-                                    Text(theme.displayName).tag(theme)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-                        }
-                        
-                        Toggle("Звуки таймера", isOn: $vm.isSoundEnabled)
-
-                        Button("Очистить все данные", role: .destructive) {
-                            showClearAlert = true
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    .shadow(radius: 2)
-
-                    // Информация
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("О приложении")
-                            .font(.headline)
-                        Text(vm.appVersion())
-                        Text("Разработано специально для тестового задания.")
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding()
-                    .background(Color(.systemBackground))
-                    .cornerRadius(12)
-                    .shadow(radius: 2)
+                    avatarSection
+                    avatarDeleteButton
+                    statsSection
+                    settingsSection
+                    infoSection
                 }
                 .padding()
             }
             .navigationTitle("Профиль")
             .preferredColorScheme(currentColorScheme)
             .onAppear {
-                Task {
-                    vm.fetchStats()
+                vm.fetchStats { count, total in
+                    DispatchQueue.main.async {
+                        vm.totalWorkouts = count
+                        vm.totalDuration = total
+                    }
                 }
                 currentColorScheme = vm.selectedTheme.colorScheme
             }
             .alert("Очистить все данные?", isPresented: $showClearAlert) {
                 Button("Удалить", role: .destructive) {
-                    Task {
-                        vm.clearAllData()
+                    vm.clearAllData { count, total in
+                        DispatchQueue.main.async {
+                            vm.totalWorkouts = count
+                            vm.totalDuration = total
+                        }
                     }
                 }
                 Button("Отмена", role: .cancel) {}
@@ -142,6 +65,97 @@ struct ProfileView: View {
         }
     }
 
+    private var avatarSection: some View {
+        let currentAvatar = vm.avatarData
+        return PhotosPicker(selection: $selectedPhoto, matching: .images) {
+            if let data = currentAvatar, let uiImage = UIImage(data: data) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .frame(width: 100, height: 100)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Color.primary, lineWidth: 2))
+                    .shadow(radius: 4)
+            } else {
+                Circle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: 100, height: 100)
+                    .overlay(
+                        Image(systemName: "camera.fill")
+                            .font(.title)
+                            .foregroundColor(.gray)
+                    )
+            }
+        }
+    }
+
+    private var avatarDeleteButton: some View {
+        Group {
+            if vm.avatarData != nil {
+                Button(role: .destructive) {
+                    vm.clearAvatar()
+                } label: {
+                    Image(systemName: "trash")
+                        .foregroundColor(.red)
+                }
+            }
+        }
+    }
+
+    private var statsSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Общая статистика")
+                .font(.headline)
+            Text("Всего тренировок: \(vm.totalWorkouts)")
+            Text("Общее время: \(formatDuration(vm.totalDuration))")
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(radius: 2)
+    }
+
+    private var settingsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Настройки")
+                .font(.headline)
+            Section {
+                Text("Тема")
+                Picker("Тема", selection: $vm.selectedTheme) {
+                    ForEach(AppTheme.allCases) { theme in
+                        Text(theme.displayName).tag(theme)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
+            Toggle("Звуки таймера", isOn: $vm.isSoundEnabled)
+            Button("Очистить все данные", role: .destructive) {
+                showClearAlert = true
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(radius: 2)
+    }
+
+    private var infoSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("О приложении")
+                .font(.headline)
+            Text(vm.appVersion())
+            Text("Разработано специально для тестового задания.")
+                .font(.footnote)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(12)
+        .shadow(radius: 2)
+    }
+
     private func formatDuration(_ seconds: Int) -> String {
         let h = seconds / 3600
         let m = (seconds % 3600) / 60
@@ -151,7 +165,6 @@ struct ProfileView: View {
             : String(format: "%02d:%02d", m, s)
     }
 }
-
 
 #Preview {
     ProfileView()

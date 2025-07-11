@@ -23,7 +23,6 @@ final class TimerViewModel: ObservableObject {
     @Published var isEditingTime = false
 
     private var timer: Timer?
-    private let context = CoreDataStack.shared.context
     var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
 
     init() {
@@ -122,14 +121,19 @@ final class TimerViewModel: ObservableObject {
     func saveWorkout() {
         isRunning = false
 
-        let context = CoreDataStack.shared.context
-        context.perform { [self] in
+        let totalTimeCopy = totalTime
+        let remainingSecondsCopy = remainingSeconds
+        let workoutTypeCopy = workoutType
+        let notesCopy = notes
+
+        let context = CoreDataStack.shared.container.newBackgroundContext()
+        context.perform {
             let workout = Workout(context: context)
             workout.id = UUID()
             workout.date = Date()
-            workout.duration = Int32(totalTime - remainingSeconds)
-            workout.type = workoutType.rawValue
-            workout.notes = notes
+            workout.duration = Int32(totalTimeCopy - remainingSecondsCopy)
+            workout.type = workoutTypeCopy.rawValue
+            workout.notes = notesCopy
 
             do {
                 try context.save()

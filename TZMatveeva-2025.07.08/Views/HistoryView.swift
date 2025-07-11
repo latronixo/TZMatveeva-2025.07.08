@@ -50,7 +50,12 @@ struct HistoryView: View {
                 }
                 .listStyle(.plain)
                 .onAppear {
-                    vm.fetchWorkouts()
+                    vm.fetchWorkouts { workouts in
+                        DispatchQueue.main.async {
+                            vm.workouts = workouts
+                            vm.filterWorkouts()
+                        }
+                    }
                 }
             }
             .navigationTitle("История тренировок")
