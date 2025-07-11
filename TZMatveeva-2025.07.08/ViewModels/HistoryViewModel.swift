@@ -13,6 +13,7 @@ final class HistoryViewModel: ObservableObject {
     @Published var workouts: [Workout] = []
     @Published var searchText: String = ""
     @Published var filteredWorkouts: [Workout] = []
+    @Published var groupedWorkouts: [String: [Workout]] = [:]
 
     private let context = CoreDataStack.shared.context
 
@@ -22,14 +23,12 @@ final class HistoryViewModel: ObservableObject {
             workouts = try context.fetch(request)
             filterWorkouts()
         } catch {
-            print("❌ Ошибка получения тренировок: \(error)")
+            print("❌ Ошибка получения тренировки: \(error)")
         }
     }
 
-    func deleteWorkout(at offsets: IndexSet) {
-        let items = filteredWorkouts
-        offsets.forEach { index in
-            let workout = items[index]
+    func deleteWorkouts(_ workoutsToDelete: [Workout]) {
+        for workout in workoutsToDelete {
             context.delete(workout)
         }
         do {
@@ -41,13 +40,20 @@ final class HistoryViewModel: ObservableObject {
     }
 
     func filterWorkouts() {
-        if searchText.isEmpty {
-            filteredWorkouts = workouts
-        } else {
-            filteredWorkouts = workouts.filter {
-                ($0.type.lowercased().contains(searchText.lowercased()) ||
-                $0.notes?.lowercased().contains(searchText.lowercased()) == true)
+        let base = searchText.isEmpty
+            ? workouts
+            : workouts.filter {
+                $0.type.lowercased().contains(searchText.lowercased()) ||
+                $0.notes?.lowercased().contains(searchText.lowercased()) == true
             }
+
+        filteredWorkouts = base
+
+        // Группировка по дате (формат: yyyy-MM-dd)
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        groupedWorkouts = Dictionary(grouping: base) { workout in
+            formatter.string(from: workout.date)
         }
     }
 }

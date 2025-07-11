@@ -16,29 +16,37 @@ struct HistoryView: View {
                 TextField("Поиск", text: $vm.searchText)
                     .padding(.horizontal)
                     .textFieldStyle(.roundedBorder)
-                    .onChange(of: vm.searchText, perform: { _ in
+                    .onChange(of: vm.searchText) {
                         vm.filterWorkouts()
-                    })
+                    }
 
                 List {
-                    ForEach(vm.filteredWorkouts, id: \.id) { workout in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(workout.type)
-                                .font(.headline)
-                            Text("Длительность: \(formatDuration(workout.duration))")
-                                .font(.subheadline)
-                            if let notes = workout.notes, !notes.isEmpty {
-                                Text(notes)
-                                    .font(.subheadline)
-                                    .italic()
+                    ForEach(vm.groupedWorkouts.keys.sorted(by: >), id: \.self) { dateKey in
+                        Section(header: Text(formatSectionDate(dateKey))) {
+                            ForEach(vm.groupedWorkouts[dateKey] ?? [], id: \.id) { workout in
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(workout.type)
+                                        .font(.headline)
+                                    Text("Длительность: \(formatDuration(workout.duration))")
+                                        .font(.subheadline)
+                                    if let notes = workout.notes, !notes.isEmpty {
+                                        Text(notes)
+                                            .font(.subheadline)
+                                            .italic()
+                                    }
+                                    Text("Дата: \(formatDate(workout.date))")
+                                        .font(.footnote)
+                                        .foregroundColor(.gray)
+                                }
+                                .padding(.vertical, 4)
                             }
-                            Text("Дата: \(formatDate(workout.date))")
-                                .font(.footnote)
-                                .foregroundColor(.gray)
+                            .onDelete { indexSet in
+                                let items = vm.groupedWorkouts[dateKey] ?? []
+                                let toDelete = indexSet.map { items[$0] }
+                                vm.deleteWorkouts(toDelete)
+                            }
                         }
-                        .padding(.vertical, 4)
                     }
-                    .onDelete(perform: vm.deleteWorkout)
                 }
                 .listStyle(.plain)
                 .onAppear {
@@ -47,12 +55,11 @@ struct HistoryView: View {
             }
             .navigationTitle("История тренировок")
             .toolbar {
-                EditButton() // Позволяет активировать режим удаления
+                EditButton()
             }
         }
     }
 
-    // Форматирование длительности
     func formatDuration(_ seconds: Int32) -> String {
         let h = seconds / 3600
         let m = (seconds % 3600) / 60
@@ -62,11 +69,19 @@ struct HistoryView: View {
             : String(format: "%02d:%02d", m, s)
     }
 
-    // Форматирование даты
     func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .short
         formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+
+    func formatSectionDate(_ string: String) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        guard let date = formatter.date(from: string) else { return string }
+
+        formatter.dateStyle = .medium
         return formatter.string(from: date)
     }
 }
