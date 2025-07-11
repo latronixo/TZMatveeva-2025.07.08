@@ -10,6 +10,7 @@ import SwiftUI
 @main
 struct SportTimerApp: App {
     @State private var selectedTab = 0
+    @StateObject private var settings = AppSettings.shared
     let persistenceController = CoreDataStack.shared
 
     var body: some Scene {
@@ -36,6 +37,7 @@ struct SportTimerApp: App {
                     }
                     .tag(3)
             }
+            .preferredColorScheme(settings.selectedTheme.colorScheme)
         }
     }
 }

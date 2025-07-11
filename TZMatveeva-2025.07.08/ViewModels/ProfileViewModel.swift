@@ -7,8 +7,10 @@
 
 import Foundation
 import CoreData
+import Combine
 import SwiftUI
 
+@MainActor
 final class ProfileViewModel: ObservableObject {
     @Published var totalDuration: Int = 0
     @Published var totalWorkouts: Int = 0
@@ -18,10 +20,13 @@ final class ProfileViewModel: ObservableObject {
 
     @Published var selectedTheme: AppTheme {
         didSet {
-            UserDefaults.standard.set(selectedTheme.rawValue, forKey: themeKey)
+            if AppSettings.shared.selectedTheme != selectedTheme {
+                AppSettings.shared.selectedTheme = selectedTheme
+            }
         }
     }
-    private let themeKey = "app_theme"
+    
+    private var cancellables = Set<AnyCancellable>()    //подписка
     
     private let context: NSManagedObjectContext
     
@@ -32,31 +37,37 @@ final class ProfileViewModel: ObservableObject {
         }
     }
 
-    @MainActor
     init() {
         self.context = CoreDataStack.shared.context
         self.avatarData = UserDefaults.standard.data(forKey: avatarKey)
 
-        // Инициализация темы из UserDefaults
-        let savedTheme = UserDefaults.standard.string(forKey: themeKey)
-        self.selectedTheme = AppTheme(rawValue: savedTheme ?? "") ?? .system
+        // Инициализация темы из AppSettings
+        self.selectedTheme = AppSettings.shared.selectedTheme
         
         self.isSoundEnabled = UserDefaults.standard.bool(forKey: soundKey)
+
+        // Подписываемся на изменения темы из AppSettings
+        AppSettings.shared.$selectedTheme
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newTheme in
+                guard let self = self else { return }
+                if self.selectedTheme != newTheme {
+                    self.selectedTheme = newTheme
+                }
+            }
+            .store(in: &cancellables)
     }
 
-    @MainActor
     func saveAvatarData(_ data: Data) {
         avatarData = data
         UserDefaults.standard.set(data, forKey: avatarKey)
     }
 
-    @MainActor
     func clearAvatar() {
         avatarData = nil
         UserDefaults.standard.removeObject(forKey: avatarKey)
     }
 
-    @MainActor
     func fetchStats() {
         let request = NSFetchRequest<Workout>(entityName: "Workout")
         do {
@@ -68,7 +79,6 @@ final class ProfileViewModel: ObservableObject {
         }
     }
 
-    @MainActor
     func clearAllData() {
         let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Workout.fetchRequest()
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
@@ -87,6 +97,7 @@ final class ProfileViewModel: ObservableObject {
         return "Версия \(version) (build \(build))"
     }
 }
+
 
 enum AppTheme: String, CaseIterable, Identifiable {
     case system

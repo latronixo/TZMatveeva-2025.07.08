@@ -12,6 +12,9 @@ struct ProfileView: View {
     @StateObject private var vm = ProfileViewModel()
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var showClearAlert = false
+    
+    // Локальное состояние colorScheme для управления отображением темы
+    @State private var currentColorScheme: ColorScheme? = nil
 
     var body: some View {
         NavigationStack {
@@ -109,11 +112,12 @@ struct ProfileView: View {
                 .padding()
             }
             .navigationTitle("Профиль")
-            .preferredColorScheme(vm.selectedTheme.colorScheme)
+            .preferredColorScheme(currentColorScheme)
             .onAppear {
                 Task {
                     vm.fetchStats()
                 }
+                currentColorScheme = vm.selectedTheme.colorScheme
             }
             .alert("Очистить все данные?", isPresented: $showClearAlert) {
                 Button("Удалить", role: .destructive) {
@@ -131,6 +135,9 @@ struct ProfileView: View {
                         }
                     }
                 }
+            }
+            .onChange(of: vm.selectedTheme) { newTheme, oldTheme in
+                currentColorScheme = newTheme.colorScheme
             }
         }
     }
