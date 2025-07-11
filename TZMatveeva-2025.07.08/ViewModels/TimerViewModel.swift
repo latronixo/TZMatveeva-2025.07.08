@@ -52,18 +52,33 @@ final class TimerViewModel: ObservableObject {
     }
 
     func start() {
+        guard remainingSeconds > 0 else { return }
+
         isRunning = true
         isEditingTime = false
         playSound(id: 1016)
 
+        // Запускаем background task на ограниченное время
         backgroundTaskID = UIApplication.shared.beginBackgroundTask {
             Task { @MainActor in
                 self.endBackgroundTask()
             }
         }
 
-        sendNotification(title: "Тренировка началась", body: "Таймер запущен.")
+        // Удаляем старые уведомления, ставим новое на оставшееся время
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["WorkoutEndNotification"])
 
+        let content = UNMutableNotificationContent()
+        content.title = "Тренировка завершена"
+        content.body = "Время вышло."
+        content.sound = UNNotificationSound.default
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(remainingSeconds), repeats: false)
+        let request = UNNotificationRequest(identifier: "WorkoutEndNotification", content: content, trigger: trigger)
+
+        UNUserNotificationCenter.current().add(request)
+
+        // Запускаем таймер для обновления UI
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self else { return }
             Task { @MainActor in
@@ -73,17 +88,20 @@ final class TimerViewModel: ObservableObject {
                     self.timer?.invalidate()
                     self.isRunning = false
                     self.playSound(id: 1005)
-                    self.sendNotification(title: "Тренировка завершена", body: "Время вышло.")
+                    self.endBackgroundTask()
                 }
             }
         }
     }
 
     func pause() {
+        guard isRunning else { return }
         isRunning = false
         playSound(id: 1007)
         sendNotification(title: "Тренировка приостановлена", body: "Вы приостановили тренировку.")
         timer?.invalidate()
+        endBackgroundTask()
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["WorkoutEndNotification"])
     }
 
     func reset() {
@@ -97,6 +115,8 @@ final class TimerViewModel: ObservableObject {
         workoutType = .strength
         notes = ""
         timer?.invalidate()
+        endBackgroundTask()
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["WorkoutEndNotification"])
     }
 
     func saveWorkout() {
@@ -116,6 +136,7 @@ final class TimerViewModel: ObservableObject {
         }
 
         reset()
+        endBackgroundTask()
     }
 
     func sendNotification(title: String, body: String) {
@@ -155,7 +176,9 @@ final class TimerViewModel: ObservableObject {
     }
 
     func endBackgroundTask() {
-        UIApplication.shared.endBackgroundTask(backgroundTaskID)
-        backgroundTaskID = .invalid
+        if backgroundTaskID != .invalid {
+            UIApplication.shared.endBackgroundTask(backgroundTaskID)
+            backgroundTaskID = .invalid
+        }
     }
 }

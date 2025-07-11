@@ -69,12 +69,15 @@ struct ProfileView: View {
                         Text("Настройки")
                             .font(.headline)
 
-                        Picker("Тема", selection: $vm.selectedTheme) {
-                            ForEach(AppTheme.allCases) { theme in
-                                Text(theme.displayName).tag(theme)
+                        Section {
+                            Text("Тема")
+                            Picker("Тема", selection: $vm.selectedTheme) {
+                                ForEach(AppTheme.allCases) { theme in
+                                    Text(theme.displayName).tag(theme)
+                                }
                             }
+                            .pickerStyle(.segmented)
                         }
-                        .pickerStyle(.segmented)
                         
                         Toggle("Звуки таймера", isOn: $vm.isSoundEnabled)
 
