@@ -8,35 +8,55 @@
 import Foundation
 import CoreData
 
-@MainActor
+// MARK: — Безопасная структура для передачи в UI
+struct WorkoutDTO: Identifiable {
+    let id: UUID
+    let type: String
+    let duration: Int32
+    let date: Date
+}
+
 final class HomeViewModel: ObservableObject {
     @Published var totalWorkouts = 0
     @Published var totalDuration: Int32 = 0
-    @Published var recentWorkouts: [Workout] = []
+    @Published var recentWorkouts: [WorkoutDTO] = []
 
-    private let context = CoreDataStack.shared.context
-
+    /// Человекочитаемое форматирование длительности
     var totalDurationFormatted: String {
-        formatDuration(totalDuration)
-    }
-
-    func formatDuration(_ seconds: Int32) -> String {
+        let seconds = totalDuration
         let h = seconds / 3600
         let m = (seconds % 3600) / 60
         let s = seconds % 60
-        return h > 0 ? String(format: "%02d:%02d:%02d", h, m, s)
-                     : String(format: "%02d:%02d", m, s)
+        return h > 0
+            ? String(format: "%02d:%02d:%02d", h, m, s)
+            : String(format: "%02d:%02d", m, s)
     }
 
-    func fetchStats() {
-        let request = NSFetchRequest<Workout>(entityName: "Workout")
-        do {
-            let workouts = try context.fetch(request)
-            totalWorkouts = workouts.count
-            totalDuration = workouts.reduce(0) { $0 + $1.duration }
-            recentWorkouts = workouts.sorted { $0.date > $1.date }
-        } catch {
-            print("❌ Failed to fetch workouts: \(error)")
+    /// Асинхронный fetch статистики из Core Data
+    func fetchStats(completion: @escaping (Int, Int32, [WorkoutDTO]) -> Void) {
+        let bgContext = CoreDataStack.shared.context
+        bgContext.perform {
+            let request = NSFetchRequest<Workout>(entityName: "Workout")
+            request.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
+            do {
+                let fetched = try bgContext.fetch(request)
+                let dtos = fetched.map { workout in
+                    WorkoutDTO(
+                        id: workout.id,
+                        type: workout.type,
+                        duration: workout.duration,
+                        date: workout.date
+                    )
+                }
+                let total = dtos.reduce(0) { $0 + $1.duration }
+                let latest = Array(dtos.prefix(3))
+                let totalCount = dtos.count
+                let totalDuration = total
+                let latestWorkouts = latest
+                completion(totalCount, totalDuration, latestWorkouts)
+            } catch {
+                print("❌ Failed to fetch workouts: \(error)")
+            }
         }
     }
 }

@@ -8,13 +8,15 @@
 import SwiftUI
 
 struct HomeView: View {
-    @StateObject var vm = HomeViewModel()
+    @StateObject private var vm = HomeViewModel()
     @Binding var selectedTab: Int
 
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
-                Text("Привет, спортсмен!").font(.title.bold())
+                // Приветствие и статистика
+                Text("Привет, спортсмен!")
+                    .font(.title.bold())
 
                 HStack {
                     VStack(alignment: .leading) {
@@ -23,7 +25,8 @@ struct HomeView: View {
                     }
                     Spacer()
                 }
-                
+
+                // Кнопка перехода к таймеру
                 Button("Начать тренировку") {
                     selectedTab = 1
                 }
@@ -34,17 +37,55 @@ struct HomeView: View {
                 .foregroundColor(.white)
                 .cornerRadius(12)
 
-                Text("Последние тренировки").font(.headline)
+                // Заголовок последних тренировок
+                Text("Последние тренировки")
+                    .font(.headline)
 
-                ForEach(vm.recentWorkouts.prefix(3)) { workout in
-                    Text("\(workout.type) - \(vm.formatDuration(workout.duration))")
+                // Мини-карточки последних 3 тренировок
+                ForEach(vm.recentWorkouts) { workout in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(workout.type)
+                                .font(.subheadline.bold())
+                            Text("Длительность: \(formatDuration(workout.duration))")
+                                .font(.footnote)
+                                .foregroundColor(.gray)
+                        }
+                        Spacer()
+                        Text(workout.date, format: .dateTime.month().day().year())
+                            .font(.footnote)
+                            .foregroundColor(.gray)
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
                 }
 
                 Spacer()
             }
             .padding()
-            .onAppear { vm.fetchStats() }
+            .onAppear {
+                vm.fetchStats { totalCount, totalDuration, latestWorkouts in
+                    DispatchQueue.main.async {
+                        vm.totalWorkouts = totalCount
+                        vm.totalDuration = totalDuration
+                        vm.recentWorkouts = latestWorkouts
+                    }
+                }
+            }
         }
+    }
+}
+
+// Помогайка для форматирования длительности внутри View
+private extension HomeView {
+    func formatDuration(_ seconds: Int32) -> String {
+        let h = seconds / 3600
+        let m = (seconds % 3600) / 60
+        let s = seconds % 60
+        return h > 0
+            ? String(format: "%02d:%02d:%02d", h, m, s)
+            : String(format: "%02d:%02d", m, s)
     }
 }
 
