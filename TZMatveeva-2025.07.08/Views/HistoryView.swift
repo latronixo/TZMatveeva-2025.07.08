@@ -13,56 +13,72 @@ struct HistoryView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                TextField("Поиск", text: $vm.searchText)
-                    .padding(.horizontal)
-                    .textFieldStyle(.roundedBorder)
-                    .onChange(of: vm.searchText) {
-                        vm.filterWorkouts()
-                    }
-
-                List {
-                    ForEach(vm.groupedWorkouts.keys.sorted(by: >), id: \.self) { dateKey in
-                        Section(header: Text(formatSectionDate(dateKey))) {
-                            ForEach(vm.groupedWorkouts[dateKey] ?? [], id: \.id) { workout in
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text(workout.type)
-                                        .font(.headline)
-                                    Text("Длительность: \(formatDuration(workout.duration))")
-                                        .font(.subheadline)
-                                    if let notes = workout.notes, !notes.isEmpty {
-                                        Text(notes)
-                                            .font(.subheadline)
-                                            .italic()
-                                    }
-                                    Text("Дата: \(formatDate(workout.date))")
-                                        .font(.footnote)
-                                        .foregroundColor(.gray)
-                                }
-                                .padding(.vertical, 4)
-                            }
-                            .onDelete { indexSet in
-                                let items = vm.groupedWorkouts[dateKey] ?? []
-                                let toDelete = indexSet.map { items[$0] }
-                                vm.deleteWorkouts(toDelete)
-                            }
-                        }
-                    }
-                }
-                .listStyle(.plain)
-                .onAppear {
-                    vm.fetchWorkouts { workouts in
-                        DispatchQueue.main.async {
-                            vm.workouts = workouts
-                            vm.filterWorkouts()
-                        }
-                    }
-                }
+                searchSection
+                workoutsList
             }
             .navigationTitle("История тренировок")
             .toolbar {
                 EditButton()
             }
         }
+    }
+
+    private var searchSection: some View {
+        TextField("Поиск", text: $vm.searchText)
+            .padding(.horizontal)
+            .textFieldStyle(.roundedBorder)
+            .onChange(of: vm.searchText) {
+                vm.filterWorkouts()
+            }
+    }
+
+    private var workoutsList: some View {
+        List {
+            ForEach(vm.groupedWorkouts.keys.sorted(by: >), id: \.self) { dateKey in
+                Section(header: Text(formatSectionDate(dateKey))) {
+                    ForEach(vm.groupedWorkouts[dateKey] ?? [], id: \.id) { workout in
+                        workoutRow(workout)
+                    }
+                    .onDelete { indexSet in
+                        let items = vm.groupedWorkouts[dateKey] ?? []
+                        let toDelete = indexSet.map { items[$0] }
+                        vm.deleteWorkouts(toDelete) { workouts in
+                            DispatchQueue.main.async {
+                                vm.workouts = workouts
+                                vm.filterWorkouts()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .listStyle(.plain)
+        .onAppear {
+            vm.fetchWorkouts { workouts in
+                DispatchQueue.main.async {
+                    vm.workouts = workouts
+                    vm.filterWorkouts()
+                }
+            }
+        }
+    }
+
+    private func workoutRow(_ workout: WorkoutHistoryDTO) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(workout.type)
+                .font(.headline)
+            Text("Длительность: \(formatDuration(workout.duration))")
+                .font(.subheadline)
+            if let notes = workout.notes, !notes.isEmpty {
+                Text(notes)
+                    .font(.subheadline)
+                    .italic()
+            }
+            Text("Дата: \(formatDate(workout.date))")
+                .font(.footnote)
+                .foregroundColor(.gray)
+        }
+        .padding(.vertical, 4)
     }
 
     func formatDuration(_ seconds: Int32) -> String {

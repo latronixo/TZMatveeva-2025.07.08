@@ -8,19 +8,37 @@
 import Foundation
 import CoreData
 
-final class HistoryViewModel: ObservableObject {
-    @Published var workouts: [Workout] = []
-    @Published var searchText: String = ""
-    @Published var filteredWorkouts: [Workout] = []
-    @Published var groupedWorkouts: [String: [Workout]] = [:]
+// MARK: — Безопасная структура для передачи в UI
+struct WorkoutHistoryDTO: Identifiable {
+    let id: UUID
+    let type: String
+    let duration: Int32
+    let date: Date
+    let notes: String?
+}
 
-    func fetchWorkouts(completion: @escaping ([Workout]) -> Void) {
+final class HistoryViewModel: ObservableObject {
+    @Published var workouts: [WorkoutHistoryDTO] = []
+    @Published var searchText: String = ""
+    @Published var filteredWorkouts: [WorkoutHistoryDTO] = []
+    @Published var groupedWorkouts: [String: [WorkoutHistoryDTO]] = [:]
+
+    func fetchWorkouts(completion: @escaping ([WorkoutHistoryDTO]) -> Void) {
         let context = CoreDataStack.shared.container.newBackgroundContext()
         context.perform {
             let request = NSFetchRequest<Workout>(entityName: "Workout")
             do {
                 let result = try context.fetch(request)
-                completion(result)
+                let dtos = result.map { workout in
+                    WorkoutHistoryDTO(
+                        id: workout.id,
+                        type: workout.type,
+                        duration: workout.duration,
+                        date: workout.date,
+                        notes: workout.notes
+                    )
+                }
+                completion(dtos)
             } catch {
                 print("❌ Ошибка получения тренировки: \(error)")
                 completion([])
@@ -28,12 +46,13 @@ final class HistoryViewModel: ObservableObject {
         }
     }
 
-    func deleteWorkouts(_ workoutsToDelete: [Workout], completion: @escaping ([Workout]) -> Void) {
+    func deleteWorkouts(_ workoutsToDelete: [WorkoutHistoryDTO], completion: @escaping ([WorkoutHistoryDTO]) -> Void) {
         let context = CoreDataStack.shared.container.newBackgroundContext()
         context.perform {
             for workout in workoutsToDelete {
-                let objectID = workout.objectID
-                if let object = try? context.existingObject(with: objectID) {
+                let request = NSFetchRequest<Workout>(entityName: "Workout")
+                request.predicate = NSPredicate(format: "id == %@", workout.id as CVarArg)
+                if let object = try? context.fetch(request).first {
                     context.delete(object)
                 }
             }
@@ -42,7 +61,16 @@ final class HistoryViewModel: ObservableObject {
                 // После удаления — fetchWorkouts в этом же контексте
                 let request = NSFetchRequest<Workout>(entityName: "Workout")
                 let result = try context.fetch(request)
-                completion(result)
+                let dtos = result.map { workout in
+                    WorkoutHistoryDTO(
+                        id: workout.id,
+                        type: workout.type,
+                        duration: workout.duration,
+                        date: workout.date,
+                        notes: workout.notes
+                    )
+                }
+                completion(dtos)
             } catch {
                 print("❌ Ошибка удаления тренировки: \(error)")
                 completion([])
