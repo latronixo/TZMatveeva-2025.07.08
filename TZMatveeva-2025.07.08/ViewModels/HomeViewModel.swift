@@ -14,6 +14,29 @@ struct WorkoutDTO: Identifiable {
     let type: String
     let duration: Int32
     let date: Date
+    let notes: String?
+    
+    init(
+        id: UUID = .init(),
+        type: String,
+        duration: Int32,
+        date: Date = .now,
+        notes: String?
+    ) {
+        self.id = id
+        self.type = type
+        self.duration = duration
+        self.date = date
+        self.notes = notes
+    }
+    
+    func apply(to workout: Workout) {
+        workout.id = id
+        workout.date = date
+        workout.duration = duration
+        workout.type = type
+        workout.notes = notes
+    }
 }
 
 final class HomeViewModel: ObservableObject {
@@ -45,7 +68,8 @@ final class HomeViewModel: ObservableObject {
                         id: workout.id,
                         type: workout.type,
                         duration: workout.duration,
-                        date: workout.date
+                        date: workout.date,
+                        notes: workout.notes
                     )
                 }
                 let total = dtos.reduce(0) { $0 + $1.duration }

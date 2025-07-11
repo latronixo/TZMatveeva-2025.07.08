@@ -25,12 +25,12 @@ final class ProfileViewModel: ObservableObject {
                     DispatchQueue.main.async {
                          AppSettings.shared.selectedTheme = selectedScheme
                      }
-            }
+                }
         }
     }
     
     private var cancellables = Set<AnyCancellable>()    //подписка
-
+    
     init() {
         self.avatarData = UserDefaults.standard.data(forKey: avatarKey)
         self.isSoundEnabled = UserDefaults.standard.bool(forKey: soundKey)
@@ -50,14 +50,14 @@ final class ProfileViewModel: ObservableObject {
     func fetchStats(completion: @escaping (Int, Int) -> Void) {
         let context = CoreDataStack.shared.container.newBackgroundContext()
         context.perform {
-        let request = NSFetchRequest<Workout>(entityName: "Workout")
-        do {
-            let workouts = try context.fetch(request)
+            let request = NSFetchRequest<Workout>(entityName: "Workout")
+            do {
+                let workouts = try context.fetch(request)
                 let count = workouts.count
                 let total = workouts.reduce(0) { $0 + Int($1.duration) }
                 completion(count, total)
-        } catch {
-            print("❌ Ошибка получения статистики: \(error)")
+            } catch {
+                print("❌ Ошибка получения статистики: \(error)")
                 completion(0, 0)
             }
         }
@@ -66,19 +66,19 @@ final class ProfileViewModel: ObservableObject {
     func clearAllData(completion: @escaping (Int, Int) -> Void) {
         let context = CoreDataStack.shared.container.newBackgroundContext()
         context.perform {
-        let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Workout.fetchRequest()
-        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
-        do {
-            try context.execute(deleteRequest)
-            try context.save()
+            let fetchRequest: NSFetchRequest<NSFetchRequestResult> = Workout.fetchRequest()
+            let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+            do {
+                try context.execute(deleteRequest)
+                try context.save()
                 // После удаления — fetch статистики в этом же контексте
                 let request = NSFetchRequest<Workout>(entityName: "Workout")
                 let workouts = try context.fetch(request)
                 let count = workouts.count
                 let total = workouts.reduce(0) { $0 + Int($1.duration) }
                 completion(count, total)
-        } catch {
-            print("❌ Ошибка удаления всех данных: \(error)")
+            } catch {
+                print("❌ Ошибка удаления всех данных: \(error)")
                 completion(0, 0)
             }
         }

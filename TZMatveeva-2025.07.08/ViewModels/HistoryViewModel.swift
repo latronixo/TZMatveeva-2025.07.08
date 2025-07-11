@@ -7,78 +7,80 @@
 
 import Foundation
 import CoreData
+import Combine
 
 // MARK: — Безопасная структура для передачи в UI
-struct WorkoutHistoryDTO: Identifiable {
+struct WorkoutHistoryDTO: Identifiable, Equatable {
     let id: UUID
     let type: String
     let duration: Int32
     let date: Date
     let notes: String?
+    
+    init(workout: Workout) {
+        self.id = workout.id
+        self.type = workout.type
+        self.duration = workout.duration
+        self.date = workout.date
+        self.notes = workout.notes
+    }
 }
 
 final class HistoryViewModel: ObservableObject {
-    @Published var workouts: [WorkoutHistoryDTO] = []
     @Published var searchText: String = ""
-    @Published var filteredWorkouts: [WorkoutHistoryDTO] = []
-    @Published var groupedWorkouts: [String: [WorkoutHistoryDTO]] = [:]
-
-    func fetchWorkouts(completion: @escaping ([WorkoutHistoryDTO]) -> Void) {
-        let context = CoreDataStack.shared.container.newBackgroundContext()
-        context.perform {
-            let request = NSFetchRequest<Workout>(entityName: "Workout")
-            do {
-                let result = try context.fetch(request)
-                let dtos = result.map { workout in
-                    WorkoutHistoryDTO(
-                        id: workout.id,
-                        type: workout.type,
-                        duration: workout.duration,
-                        date: workout.date,
-                        notes: workout.notes
-                    )
-                }
-                completion(dtos)
-            } catch {
-                print("❌ Ошибка получения тренировки: \(error)")
-                completion([])
+    @Published var workouts: [String: [WorkoutHistoryDTO]] = [:]
+    
+    var dates: [String] { workouts.keys.sorted(by: >) }
+    
+    private var cancellables: Set<AnyCancellable> = []
+    private let coreData: CoreDataStack
+    
+    init(coreData: CoreDataStack = .shared) {
+        self.coreData = coreData
+        
+        $searchText
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] _ in
+                filterWorkouts(workouts.values.flatMap(\.self))
             }
+            .store(in: &cancellables)
+    }
+
+    @MainActor
+    func fetchWorkouts() async {
+        do {
+            let workouts = try await coreData.fetchWorkouts()
+            self.filterWorkouts(workouts)
+        } catch {
+           // Handle error
+        }
+    }
+    
+    @MainActor
+    func deleteWorkouts(for date: String, at indexes: IndexSet) {
+        guard let items = workouts[date] else {
+            return
+        }
+        let toDelete = indexes
+            .filter(items.indices.contains(_:))
+            .map { items[$0] }
+        if toDelete.isEmpty {
+            return
+        }
+        Task { @MainActor in
+            let indexToDelete = try await coreData
+                .deleteWorkouts(toDelete.map(\.id))
+                .compactMap { id in
+                    workouts[date]?.firstIndex{ $0.id == id }
+                }
+                
+            let set = IndexSet(indexToDelete)
+            workouts[date]?.remove(atOffsets: set)
+            filterWorkouts(workouts.values.flatMap(\.self))
         }
     }
 
-    func deleteWorkouts(_ workoutsToDelete: [WorkoutHistoryDTO], completion: @escaping ([WorkoutHistoryDTO]) -> Void) {
-        let context = CoreDataStack.shared.container.newBackgroundContext()
-        context.perform {
-            for workout in workoutsToDelete {
-                let request = NSFetchRequest<Workout>(entityName: "Workout")
-                request.predicate = NSPredicate(format: "id == %@", workout.id as CVarArg)
-                if let object = try? context.fetch(request).first {
-                    context.delete(object)
-                }
-            }
-            do {
-                try context.save()
-                // После удаления — fetchWorkouts в этом же контексте
-                let request = NSFetchRequest<Workout>(entityName: "Workout")
-                let result = try context.fetch(request)
-                let dtos = result.map { workout in
-                    WorkoutHistoryDTO(
-                        id: workout.id,
-                        type: workout.type,
-                        duration: workout.duration,
-                        date: workout.date,
-                        notes: workout.notes
-                    )
-                }
-                completion(dtos)
-            } catch {
-                print("❌ Ошибка удаления тренировки: \(error)")
-                completion([])
-            }
-        }
-    }
-
-    func filterWorkouts() {
+    func filterWorkouts(_ workouts: [WorkoutHistoryDTO]) {
         let base = searchText.isEmpty
             ? workouts
             : workouts.filter {
@@ -86,12 +88,10 @@ final class HistoryViewModel: ObservableObject {
                 $0.notes?.lowercased().contains(searchText.lowercased()) == true
             }
 
-        filteredWorkouts = base
-
         // Группировка по дате (формат: yyyy-MM-dd)
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-        groupedWorkouts = Dictionary(grouping: base) { workout in
+        self.workouts = Dictionary(grouping: base) { workout in
             formatter.string(from: workout.date)
         }
     }
