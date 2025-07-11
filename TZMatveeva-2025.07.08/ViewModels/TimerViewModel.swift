@@ -9,7 +9,6 @@ import AVFoundation
 import UserNotifications
 import SwiftUI
 
-@MainActor
 final class TimerViewModel: ObservableObject {
     @Published var isRunning = false
     @Published var totalTime: Int {
@@ -58,10 +57,15 @@ final class TimerViewModel: ObservableObject {
         playSound(id: 1016)
 
         // Запускаем background task на ограниченное время
-        backgroundTaskID = UIApplication.shared.beginBackgroundTask {
-            Task { @MainActor in
-                self.endBackgroundTask()
+        let endBackgroundTask: () -> Void = { [weak self] in
+            guard let self = self else { return }
+            self.endBackgroundTask()
+        }
+        Task { @MainActor in
+            let taskID = UIApplication.shared.beginBackgroundTask {
+                Task { @MainActor in endBackgroundTask() }
             }
+            self.backgroundTaskID = taskID
         }
 
         // Удаляем старые уведомления, ставим новое на оставшееся время
@@ -99,7 +103,7 @@ final class TimerViewModel: ObservableObject {
         playSound(id: 1007)
         sendNotification(title: "Тренировка приостановлена", body: "Вы приостановили тренировку.")
         timer?.invalidate()
-        endBackgroundTask()
+        self.endBackgroundTask()
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["WorkoutEndNotification"])
     }
 
@@ -114,13 +118,15 @@ final class TimerViewModel: ObservableObject {
         workoutType = .strength
         notes = ""
         timer?.invalidate()
-        endBackgroundTask()
+        self.endBackgroundTask()
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["WorkoutEndNotification"])
     }
 
     func saveWorkout() {
         isRunning = false
 
+        let id = UUID()
+        let date = Date()
         let totalTimeCopy = totalTime
         let remainingSecondsCopy = remainingSeconds
         let workoutTypeCopy = workoutType
@@ -129,8 +135,8 @@ final class TimerViewModel: ObservableObject {
         let context = CoreDataStack.shared.container.newBackgroundContext()
         context.perform {
             let workout = Workout(context: context)
-            workout.id = UUID()
-            workout.date = Date()
+            workout.id = id
+            workout.date = date
             workout.duration = Int32(totalTimeCopy - remainingSecondsCopy)
             workout.type = workoutTypeCopy.rawValue
             workout.notes = notesCopy
@@ -186,8 +192,10 @@ final class TimerViewModel: ObservableObject {
 
     func endBackgroundTask() {
         if backgroundTaskID != .invalid {
-            UIApplication.shared.endBackgroundTask(backgroundTaskID)
-            backgroundTaskID = .invalid
+            Task { @MainActor in
+                UIApplication.shared.endBackgroundTask(self.backgroundTaskID)
+                self.backgroundTaskID = .invalid
+            }
         }
     }
 }
