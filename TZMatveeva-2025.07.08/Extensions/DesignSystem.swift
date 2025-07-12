@@ -109,34 +109,48 @@ struct CardStyle: ViewModifier {
 }
 
 struct PrimaryButtonStyle: ButtonStyle {
+    let isDisabled: Bool
+    
+    init(isDisabled: Bool = false) {
+        self.isDisabled = isDisabled
+    }
+    
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(AppFonts.body)
             .foregroundColor(.white)
             .frame(minHeight: 44)
             .frame(maxWidth: .infinity)
-            .background(AppColors.primary)
+            .background(isDisabled ? AppColors.systemGray4 : AppColors.primary)
             .cornerRadius(AppRadius.button)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .scaleEffect(configuration.isPressed && !isDisabled ? 0.95 : 1.0)
             .animation(.spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
+            .opacity(isDisabled ? 0.6 : 1.0)
     }
 }
 
 struct SecondaryButtonStyle: ButtonStyle {
+    let isDisabled: Bool
+    
+    init(isDisabled: Bool = false) {
+        self.isDisabled = isDisabled
+    }
+    
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(AppFonts.body)
-            .foregroundColor(AppColors.primary)
+            .foregroundColor(isDisabled ? AppColors.textTertiary : AppColors.primary)
             .frame(minHeight: 44)
             .frame(maxWidth: .infinity)
             .background(AppColors.secondaryBackground)
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.button)
-                    .stroke(AppColors.primary, lineWidth: 1)
+                    .stroke(isDisabled ? AppColors.systemGray4 : AppColors.primary, lineWidth: 1)
             )
             .cornerRadius(AppRadius.button)
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .scaleEffect(configuration.isPressed && !isDisabled ? 0.95 : 1.0)
             .animation(.spring(response: 0.2, dampingFraction: 0.6), value: configuration.isPressed)
+            .opacity(isDisabled ? 0.6 : 1.0)
     }
 }
 

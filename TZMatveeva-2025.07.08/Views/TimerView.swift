@@ -208,16 +208,16 @@ struct ControlButtonsView: View {
                         vm.reset()
                     }
                 }
-                .buttonStyle(SecondaryButtonStyle())
+                .buttonStyle(SecondaryButtonStyle(isDisabled: vm.resetDisabled))
                 .disabled(vm.resetDisabled)
                 .pressEffect()
-
+                
                 Button("Сохранить") {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                         vm.saveWorkout()
                     }
                 }
-                .buttonStyle(PrimaryButtonStyle())
+                .buttonStyle(PrimaryButtonStyle(isDisabled: vm.saveDisabled))
                 .disabled(vm.saveDisabled)
                 .pressEffect()
             }
