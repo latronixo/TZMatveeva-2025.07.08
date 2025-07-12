@@ -19,15 +19,16 @@ struct ProfileView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: AppSpacing.large) {
                     avatarSection
                     avatarDeleteButton
                     statsSection
                     settingsSection
                     infoSection
                 }
-                .padding()
+                .padding(AppSpacing.standard)
             }
+            .background(AppColors.background)
             .navigationTitle("Профиль")
             .preferredColorScheme(currentColorScheme)
             .onAppear {
@@ -114,29 +115,35 @@ struct ProfileView: View {
     }
 
     private var statsSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppSpacing.standard) {
             Text("Общая статистика")
-                .font(.headline)
+                .font(AppFonts.subtitle)
+                .foregroundColor(AppColors.textPrimary)
             Text("Всего тренировок: \(vm.totalWorkouts)")
+                .font(AppFonts.body)
+                .foregroundColor(AppColors.textPrimary)
                 .transition(.slideFromLeft)
             Text("Общее время: \(vm.totalDurationFormatted)")
+                .font(AppFonts.body)
+                .foregroundColor(AppColors.textSecondary)
                 .transition(.slideFromLeft)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 2)
+        .padding(AppSpacing.standard)
+        .cardStyle()
         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalWorkouts)
         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalDurationFormatted)
     }
 
     private var settingsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: AppSpacing.standard) {
             Text("Настройки")
-                .font(.headline)
+                .font(AppFonts.subtitle)
+                .foregroundColor(AppColors.textPrimary)
             Section {
                 Text("Тема")
+                    .font(AppFonts.body)
+                    .foregroundColor(AppColors.textPrimary)
                 Picker("Тема", selection: $vm.selectedTheme) {
                     ForEach(AppTheme.allCases) { theme in
                         Text(theme.displayName).tag(theme)
@@ -145,34 +152,36 @@ struct ProfileView: View {
                 .pickerStyle(.segmented)
             }
             Toggle("Звуки таймера", isOn: $vm.isSoundEnabled)
+                .font(AppFonts.body)
+                .foregroundColor(AppColors.textPrimary)
             Button("Очистить все данные", role: .destructive) {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                     showClearAlert = true
                 }
             }
+            .buttonStyle(DangerButtonStyle())
             .pressEffect()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 2)
+        .padding(AppSpacing.standard)
+        .cardStyle()
     }
 
     private var infoSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppSpacing.standard) {
             Text("О приложении")
-                .font(.headline)
+                .font(AppFonts.subtitle)
+                .foregroundColor(AppColors.textPrimary)
             Text(vm.appVersion())
+                .font(AppFonts.body)
+                .foregroundColor(AppColors.textPrimary)
             Text("Разработано специально для тестового задания.")
-                .font(.footnote)
-                .foregroundColor(.secondary)
+                .font(AppFonts.caption)
+                .foregroundColor(AppColors.textSecondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 2)
+        .padding(AppSpacing.standard)
+        .cardStyle()
     }
 }
 

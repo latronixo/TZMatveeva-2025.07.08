@@ -12,10 +12,11 @@ struct HistoryView: View {
 
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: AppSpacing.standard) {
                 TextField("Поиск", text: $vm.searchText)
-                    .padding(.horizontal)
+                    .padding(.horizontal, AppSpacing.standard)
                     .textFieldStyle(.roundedBorder)
+                    .font(AppFonts.body)
                     .transition(.asymmetric(
                         insertion: .move(edge: .top).combined(with: .opacity),
                         removal: .move(edge: .top).combined(with: .opacity)
@@ -23,7 +24,7 @@ struct HistoryView: View {
                 
                 // Фильтр по дням
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
+                    HStack(spacing: AppSpacing.standard) {
                         ForEach(HistoryViewModel.DateFilter.allCases, id: \.self) { filter in
                             Button(action: {
                                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
@@ -31,29 +32,30 @@ struct HistoryView: View {
                                 }
                             }) {
                                 Text(filter.displayName)
-                                    .font(.system(size: 14, weight: .medium))
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
+                                    .font(AppFonts.caption)
+                                    .fontWeight(.medium)
+                                    .padding(.horizontal, AppSpacing.standard)
+                                    .padding(.vertical, AppSpacing.small)
                                     .background(
                                         vm.selectedDateFilter == filter
-                                            ? Color.accentColor
-                                            : Color.gray.opacity(0.2)
+                                            ? AppColors.primary
+                                            : AppColors.textSecondary.opacity(0.2)
                                     )
                                     .foregroundColor(
                                         vm.selectedDateFilter == filter
                                             ? .white
-                                            : .primary
+                                            : AppColors.textPrimary
                                     )
-                                    .cornerRadius(20)
+                                    .cornerRadius(AppRadius.button)
                             }
                             .scaleEffect(vm.selectedDateFilter == filter ? 1.05 : 1.0)
                             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: vm.selectedDateFilter)
                             .pressEffect()
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, AppSpacing.standard)
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, AppSpacing.small)
                 .transition(.asymmetric(
                     insertion: .move(edge: .top).combined(with: .opacity),
                     removal: .move(edge: .top).combined(with: .opacity)
@@ -69,6 +71,7 @@ struct HistoryView: View {
                     await vm.fetchWorkouts()
                 }
             }
+            .background(AppColors.background)
             .navigationTitle("История тренировок")
             .toolbar {
                 EditButton()

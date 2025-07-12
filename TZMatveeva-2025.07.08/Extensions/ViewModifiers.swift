@@ -33,18 +33,18 @@ struct LoadingView: View {
             Color.black.opacity(0.3)
                 .ignoresSafeArea()
             
-            VStack(spacing: 16) {
+            VStack(spacing: AppSpacing.standard) {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: .white))
                     .scaleEffect(1.5)
                 
                 Text("Сохранение...")
                     .foregroundColor(.white)
-                    .font(.headline)
+                    .font(AppFonts.subtitle)
             }
-            .padding(24)
+            .padding(AppSpacing.large)
             .background(
-                RoundedRectangle(cornerRadius: 16)
+                RoundedRectangle(cornerRadius: AppRadius.card)
                     .fill(Color.black.opacity(0.8))
             )
             .scaleEffect(isAnimating ? 1.0 : 0.8)

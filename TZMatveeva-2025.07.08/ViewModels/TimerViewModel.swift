@@ -9,6 +9,48 @@ import AVFoundation
 import UserNotifications
 import SwiftUI
 
+// MARK: - Структура для управления временем
+struct TimeBindings {
+    let totalTime: Binding<Int>
+    let remainingSeconds: Binding<Int>
+    
+    var hoursBinding: Binding<Int> {
+        Binding(
+            get: { totalTime.wrappedValue / 3600 },
+            set: { newHours in
+                let minutes = (totalTime.wrappedValue % 3600) / 60
+                let seconds = totalTime.wrappedValue % 60
+                totalTime.wrappedValue = newHours * 3600 + minutes * 60 + seconds
+                remainingSeconds.wrappedValue = totalTime.wrappedValue
+            }
+        )
+    }
+    
+    var minutesBinding: Binding<Int> {
+        Binding(
+            get: { (totalTime.wrappedValue % 3600) / 60 },
+            set: { newMinutes in
+                let hours = totalTime.wrappedValue / 3600
+                let seconds = totalTime.wrappedValue % 60
+                totalTime.wrappedValue = hours * 3600 + newMinutes * 60 + seconds
+                remainingSeconds.wrappedValue = totalTime.wrappedValue
+            }
+        )
+    }
+    
+    var secondsBinding: Binding<Int> {
+        Binding(
+            get: { totalTime.wrappedValue % 60 },
+            set: { newSeconds in
+                let hours = totalTime.wrappedValue / 3600
+                let minutes = (totalTime.wrappedValue % 3600) / 60
+                totalTime.wrappedValue = hours * 3600 + minutes * 60 + newSeconds
+                remainingSeconds.wrappedValue = totalTime.wrappedValue
+            }
+        )
+    }
+}
+
 @MainActor
 final class TimerViewModel: ObservableObject {
     @Published var isRunning = false
@@ -18,6 +60,7 @@ final class TimerViewModel: ObservableObject {
         }
     }
     @Published var remainingSeconds: Int
+    
     @Published var workoutType: WorkoutType = .strength
     @Published var notes: String = ""
     @Published var isEditingTime = false
@@ -160,6 +203,20 @@ final class TimerViewModel: ObservableObject {
     
     var saveDisabled: Bool {
         isRunning || totalTime == 0 || remainingSeconds == totalTime
+    }
+    
+    // MARK: - Time Bindings
+    var timeBindings: TimeBindings {
+        TimeBindings(
+            totalTime: Binding(
+                get: { self.totalTime },
+                set: { self.totalTime = $0 }
+            ),
+            remainingSeconds: Binding(
+                get: { self.remainingSeconds },
+                set: { self.remainingSeconds = $0 }
+            )
+        )
     }
 
     private func playSound(id: SystemSoundID) {

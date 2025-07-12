@@ -13,72 +13,82 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 16) {
-                // Приветствие и статистика
-                Text("Привет, спортсмен!")
-                    .font(.title.bold())
-                    .transition(.slideFromTop)
+            ScrollView {
+                VStack(alignment: .leading, spacing: AppSpacing.large) {
+                    VStack(alignment: .leading, spacing: AppSpacing.standard) {
+                        Text("Привет, спортсмен!")
+                            .font(AppFonts.title)
+                            .foregroundColor(AppColors.textPrimary)
+                            .transition(.slideFromTop)
 
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text("Всего тренировок: \(vm.totalWorkouts)")
-                            .transition(.slideFromLeft)
-                        Text("Общее время: \(vm.totalDurationFormatted)")
-                            .transition(.slideFromLeft)
-                    }
-                    Spacer()
-                }
-                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalWorkouts)
-                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalDurationFormatted)
-
-                // Кнопка перехода к таймеру
-                Button("Начать тренировку") {
-                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                        selectedTab = 1
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(12)
-                .pressEffect()
-                .transition(.scaleFade)
-
-                // Заголовок последних тренировок
-                Text("Последние тренировки")
-                    .font(.headline)
-                    .transition(.slideFromTop)
-
-                // Мини-карточки последних 3 тренировок
-                ForEach(vm.recentWorkouts) { workout in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(workout.type)
-                                .font(.subheadline.bold())
-                            Text("Длительность: \(workout.durationFormatted)")
-                                .font(.footnote)
-                                .foregroundColor(.gray)
+                        HStack {
+                            VStack(alignment: .leading, spacing: AppSpacing.small) {
+                                Text("Всего тренировок: \(vm.totalWorkouts)")
+                                    .font(AppFonts.body)
+                                    .foregroundColor(AppColors.textPrimary)
+                                    .transition(.slideFromLeft)
+                                Text("Общее время: \(vm.totalDurationFormatted)")
+                                    .font(AppFonts.body)
+                                    .foregroundColor(AppColors.textSecondary)
+                                    .transition(.slideFromLeft)
+                            }
+                            Spacer()
                         }
-                        Spacer()
-                        Text(workout.date, format: .dateTime.month().day().year())
-                            .font(.footnote)
-                            .foregroundColor(.gray)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalWorkouts)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalDurationFormatted)
                     }
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(12)
-                    .transition(.asymmetric(
-                        insertion: .scale.combined(with: .opacity),
-                        removal: .scale.combined(with: .opacity)
-                    ))
-                }
-                .animation(.spring(response: 0.5, dampingFraction: 0.8), value: vm.recentWorkouts.count)
+                    .cardStyle()
+                    .padding(.horizontal, AppSpacing.standard)
 
-                Spacer()
+                    // Кнопка перехода к таймеру
+                    Button("Начать тренировку") {
+                        withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                            selectedTab = 1
+                        }
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .padding(.horizontal, AppSpacing.standard)
+                    .pressEffect()
+                    .transition(.scaleFade)
+
+                    Text("Последние тренировки")
+                        .font(AppFonts.subtitle)
+                        .foregroundColor(AppColors.textPrimary)
+                        .padding(.horizontal, AppSpacing.standard)
+                        .transition(.slideFromTop)
+
+                    // Мини-карточки последних 3 тренировок
+                    VStack(spacing: AppSpacing.standard) {
+                        ForEach(vm.recentWorkouts) { workout in
+                            HStack {
+                                VStack(alignment: .leading, spacing: AppSpacing.small) {
+                                    Text(workout.type)
+                                        .font(AppFonts.body)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(AppColors.textPrimary)
+                                    Text("Длительность: \(workout.durationFormatted)")
+                                        .font(AppFonts.caption)
+                                        .foregroundColor(AppColors.textSecondary)
+                                }
+                                Spacer()
+                                Text(workout.date, format: .dateTime.month().day().year())
+                                    .font(AppFonts.caption)
+                                    .foregroundColor(AppColors.textSecondary)
+                            }
+                            .padding(AppSpacing.standard)
+                            .cardStyle()
+                            .transition(.asymmetric(
+                                insertion: .scale.combined(with: .opacity),
+                                removal: .scale.combined(with: .opacity)
+                            ))
+                        }
+                    }
+                    .padding(.horizontal, AppSpacing.standard)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.8), value: vm.recentWorkouts.count)
+                }
+                .padding(.vertical, AppSpacing.standard)
             }
-            .padding()
+            .background(AppColors.background)
             .onAppear {
                 vm.fetchStats { totalCount, totalDuration, latestWorkouts in
                     DispatchQueue.main.async {

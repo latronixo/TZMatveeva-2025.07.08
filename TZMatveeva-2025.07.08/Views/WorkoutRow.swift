@@ -11,26 +11,25 @@ struct WorkoutRow: View {
     let workout: WorkoutHistoryDTO
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: AppSpacing.small) {
             Text(workout.type)
-                .font(.headline)
+                .font(AppFonts.subtitle)
+                .foregroundColor(AppColors.textPrimary)
             Text("Длительность: \(TimeFormatter.formatTime(workout.duration))")
-                .font(.subheadline)
+                .font(AppFonts.body)
+                .foregroundColor(AppColors.textSecondary)
             if let notes = workout.notes, !notes.isEmpty {
                 Text(notes)
-                    .font(.subheadline)
+                    .font(AppFonts.body)
                     .italic()
+                    .foregroundColor(AppColors.textSecondary)
             }
             Text("Дата: \(formatDate(workout.date))")
-                .font(.footnote)
-                .foregroundColor(.gray)
+                .font(AppFonts.caption)
+                .foregroundColor(AppColors.textSecondary)
         }
-        .padding(.vertical, 4)
-        .padding(.horizontal, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.gray.opacity(0.1))
-        )
+        .padding(AppSpacing.standard)
+        .cardStyle()
         .transition(.asymmetric(
             insertion: .scale.combined(with: .opacity),
             removal: .scale.combined(with: .opacity)
