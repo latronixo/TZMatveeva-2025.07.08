@@ -130,7 +130,8 @@ struct ProfileView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(AppSpacing.standard)
-        .cardStyle()
+        .background(AppColors.secondaryBackground)
+        .cornerRadius(AppRadius.card)
         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalWorkouts)
         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalDurationFormatted)
     }
@@ -164,7 +165,8 @@ struct ProfileView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(AppSpacing.standard)
-        .cardStyle()
+        .background(AppColors.secondaryBackground)
+        .cornerRadius(AppRadius.card)
     }
 
     private var infoSection: some View {
@@ -181,7 +183,8 @@ struct ProfileView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(AppSpacing.standard)
-        .cardStyle()
+        .background(AppColors.secondaryBackground)
+        .cornerRadius(AppRadius.card)
     }
 }
 

@@ -14,9 +14,23 @@ struct AppColors {
     static let success = Color(hex: "#34C759")
     static let warning = Color(hex: "#FF9500")
     static let danger = Color(hex: "#FF3B30")
-    static let background = Color(hex: "#F2F2F7")
-    static let textPrimary = Color(hex: "#000000")
-    static let textSecondary = Color(hex: "#6D6D70")
+    
+    // Адаптивные цвета для светлой и темной темы
+    static let background = Color(.systemBackground)
+    static let secondaryBackground = Color(.secondarySystemBackground)
+    static let tertiaryBackground = Color(.tertiarySystemBackground)
+    
+    static let textPrimary = Color(.label)
+    static let textSecondary = Color(.secondaryLabel)
+    static let textTertiary = Color(.tertiaryLabel)
+    
+    static let separator = Color(.separator)
+    static let systemGray = Color(.systemGray)
+    static let systemGray2 = Color(.systemGray2)
+    static let systemGray3 = Color(.systemGray3)
+    static let systemGray4 = Color(.systemGray4)
+    static let systemGray5 = Color(.systemGray5)
+    static let systemGray6 = Color(.systemGray6)
 }
 
 // MARK: - Шрифты
@@ -83,7 +97,7 @@ extension Color {
 struct CardStyle: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .background(Color.white)
+            .background(AppColors.secondaryBackground)
             .cornerRadius(AppRadius.card)
             .shadow(
                 color: AppShadows.light.color,
@@ -115,7 +129,7 @@ struct SecondaryButtonStyle: ButtonStyle {
             .foregroundColor(AppColors.primary)
             .frame(minHeight: 44)
             .frame(maxWidth: .infinity)
-            .background(Color.white)
+            .background(AppColors.secondaryBackground)
             .overlay(
                 RoundedRectangle(cornerRadius: AppRadius.button)
                     .stroke(AppColors.primary, lineWidth: 1)

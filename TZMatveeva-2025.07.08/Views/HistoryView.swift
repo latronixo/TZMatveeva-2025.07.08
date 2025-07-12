@@ -17,6 +17,7 @@ struct HistoryView: View {
                     .padding(.horizontal, AppSpacing.standard)
                     .textFieldStyle(.roundedBorder)
                     .font(AppFonts.body)
+                    .background(AppColors.secondaryBackground)
                     .transition(.asymmetric(
                         insertion: .move(edge: .top).combined(with: .opacity),
                         removal: .move(edge: .top).combined(with: .opacity)

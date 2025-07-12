@@ -169,6 +169,7 @@ struct WorkoutSettingsView: View {
             TextField("Заметки о тренировке", text: $vm.notes, axis: .vertical)
                 .textFieldStyle(.roundedBorder)
                 .font(AppFonts.body)
+                .background(AppColors.secondaryBackground)
         }
         .padding(.horizontal, AppSpacing.standard)
     }

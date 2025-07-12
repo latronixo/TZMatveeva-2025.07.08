@@ -78,7 +78,8 @@ struct HomeView: View {
                                     .foregroundColor(AppColors.textSecondary)
                             }
                             .padding(AppSpacing.standard)
-                            .cardStyle()
+                            .background(AppColors.tertiaryBackground)
+                            .cornerRadius(AppRadius.card)
                             .transition(.asymmetric(
                                 insertion: .scale.combined(with: .opacity),
                                 removal: .scale.combined(with: .opacity)

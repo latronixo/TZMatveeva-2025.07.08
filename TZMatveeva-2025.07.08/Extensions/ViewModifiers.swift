@@ -45,7 +45,7 @@ struct LoadingView: View {
             .padding(AppSpacing.large)
             .background(
                 RoundedRectangle(cornerRadius: AppRadius.card)
-                    .fill(Color.black.opacity(0.8))
+                    .fill(AppColors.secondaryBackground.opacity(0.9))
             )
             .scaleEffect(isAnimating ? 1.0 : 0.8)
             .opacity(isAnimating ? 1.0 : 0.0)
