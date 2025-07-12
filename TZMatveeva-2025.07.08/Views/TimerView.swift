@@ -110,7 +110,7 @@ struct TimerView: View {
                     .padding(.horizontal)
 
                 HStack(spacing: 16) {
-                    Button(vm.isRunning ? "Пауза" : "Старт") {
+                    Button(vm.isRunning ? "Пауза/Стоп" : "Старт") {
                         withAnimation {
                             vm.isRunning ? vm.pause() : vm.start()
                         }

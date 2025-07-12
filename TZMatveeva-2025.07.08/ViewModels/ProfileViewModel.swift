@@ -16,7 +16,11 @@ final class ProfileViewModel: ObservableObject {
     @Published var avatarData: Data?
     private let avatarKey = "user_avatar"
     private let soundKey = "timer_sounds_enabled"
-    @Published var isSoundEnabled: Bool
+    @Published var isSoundEnabled: Bool {
+        didSet {
+            UserDefaults.standard.set(isSoundEnabled, forKey: soundKey)
+        }
+    }
 
     @Published var selectedTheme: AppTheme {
         didSet {
