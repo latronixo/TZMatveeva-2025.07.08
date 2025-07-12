@@ -23,6 +23,25 @@ struct TimerView: View {
             }
             .background(AppColors.background)
             .navigationTitle("Таймер")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        if !vm.isRunning {
+                            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                                if vm.isEditingTime {
+                                    // Сохраняем изменения
+                                    vm.remainingSeconds = vm.totalTime
+                                }
+                                vm.isEditingTime.toggle()
+                            }
+                        }
+                    }) {
+                        Image(systemName: vm.isEditingTime ? "checkmark" : "pencil")
+                            .foregroundColor(vm.isRunning ? AppColors.textTertiary : AppColors.primary)
+                    }
+                    .disabled(vm.isRunning)
+                }
+            }
         }
         .overlay {
             if vm.isLoading {
@@ -56,44 +75,32 @@ struct TimeEditView: View {
     @ObservedObject var vm: TimerViewModel
     
     var body: some View {
-        HStack(spacing: AppSpacing.standard) {
-            HStack(spacing: 0) {
-                Picker("", selection: vm.timeBindings.hoursBinding) {
-                    ForEach(0..<24) { hour in
-                        Text("\(hour) ч").tag(hour)
-                    }
-                }
-                .pickerStyle(.wheel)
-                .frame(width: 80)
-
-                Picker("", selection: vm.timeBindings.minutesBinding) {
-                    ForEach(0..<60) { minute in
-                        Text("\(minute) мин").tag(minute)
-                    }
-                }
-                .pickerStyle(.wheel)
-                .frame(width: 80)
-
-                Picker("", selection: vm.timeBindings.secondsBinding) {
-                    ForEach(0..<60) { second in
-                        Text("\(second) сек").tag(second)
-                    }
-                }
-                .pickerStyle(.wheel)
-                .frame(width: 80)
-            }
-            .frame(height: 150)
-
-            Button("OK") {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                    vm.isEditingTime = false
-                    vm.remainingSeconds = vm.totalTime
+        HStack(spacing: 0) {
+            Picker("", selection: vm.timeBindings.hoursBinding) {
+                ForEach(0..<24) { hour in
+                    Text("\(hour) ч").tag(hour)
                 }
             }
-            .buttonStyle(PrimaryButtonStyle())
-            .scaleEffect(vm.isEditingTime ? 1.0 : 0.9)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: vm.isEditingTime)
+            .pickerStyle(.wheel)
+            .frame(width: 80)
+
+            Picker("", selection: vm.timeBindings.minutesBinding) {
+                ForEach(0..<60) { minute in
+                    Text("\(minute) мин").tag(minute)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(width: 80)
+
+            Picker("", selection: vm.timeBindings.secondsBinding) {
+                ForEach(0..<60) { second in
+                    Text("\(second) сек").tag(second)
+                }
+            }
+            .pickerStyle(.wheel)
+            .frame(width: 80)
         }
+        .frame(height: 150)
         .transition(.asymmetric(
             insertion: .scale.combined(with: .opacity),
             removal: .scale.combined(with: .opacity)

@@ -73,7 +73,7 @@ struct HomeView: View {
                                         .foregroundColor(AppColors.textSecondary)
                                 }
                                 Spacer()
-                                Text(workout.date, format: .dateTime.month().day().year())
+                                Text(workout.formattedDate)
                                     .font(AppFonts.caption)
                                     .foregroundColor(AppColors.textSecondary)
                             }

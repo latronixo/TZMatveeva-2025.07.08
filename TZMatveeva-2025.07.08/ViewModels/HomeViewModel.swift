@@ -16,6 +16,13 @@ struct WorkoutDTO: Identifiable {
     let date: Date
     let notes: String?
     
+    var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+    
     var durationFormatted: String {
         TimeFormatter.formatTime(duration)
     }
