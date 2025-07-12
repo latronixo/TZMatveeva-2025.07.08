@@ -75,7 +75,7 @@ final class HomeViewModel: ObservableObject {
                 let totalCount = dtos.count
                 let totalDuration = total
                 let latestWorkouts = latest
-                completion(totalCount, totalDuration, latestWorkouts)
+                completion(totalCount, Int(totalDuration), latestWorkouts)
             } catch {
                 print("❌ Failed to fetch workouts: \(error)")
             }

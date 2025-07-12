@@ -21,6 +21,7 @@ final class TimerViewModel: ObservableObject {
     @Published var workoutType: WorkoutType = .strength
     @Published var notes: String = ""
     @Published var isEditingTime = false
+    @Published var isLoading = false
 
     private var timer: Timer?
     var backgroundTaskID: UIBackgroundTaskIdentifier = .invalid
@@ -120,7 +121,7 @@ final class TimerViewModel: ObservableObject {
 
     func saveWorkout() {
         isRunning = false
-
+        isLoading = true
 
         Task { @MainActor in
             let workout = WorkoutDTO(
@@ -131,6 +132,7 @@ final class TimerViewModel: ObservableObject {
             try await CoreDataStack.shared.saveWorkout(workout)
             self.reset()
             self.endBackgroundTask()
+            self.isLoading = false
         }
     }
 
@@ -145,7 +147,7 @@ final class TimerViewModel: ObservableObject {
     }
 
     var formattedTime: String {
-        TimeFormatter.formatTime(remainingSeconds)
+        TimeFormatter.formatTime(Int32(remainingSeconds))
     }
 
     var progress: Double {

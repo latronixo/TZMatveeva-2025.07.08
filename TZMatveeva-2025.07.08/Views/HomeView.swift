@@ -17,18 +17,25 @@ struct HomeView: View {
                 // Приветствие и статистика
                 Text("Привет, спортсмен!")
                     .font(.title.bold())
+                    .transition(.slideFromTop)
 
                 HStack {
                     VStack(alignment: .leading) {
                         Text("Всего тренировок: \(vm.totalWorkouts)")
+                            .transition(.slideFromLeft)
                         Text("Общее время: \(vm.totalDurationFormatted)")
+                            .transition(.slideFromLeft)
                     }
                     Spacer()
                 }
+                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalWorkouts)
+                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalDurationFormatted)
 
                 // Кнопка перехода к таймеру
                 Button("Начать тренировку") {
-                    selectedTab = 1
+                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                        selectedTab = 1
+                    }
                 }
                 .buttonStyle(.borderedProminent)
                 .frame(maxWidth: .infinity)
@@ -36,10 +43,13 @@ struct HomeView: View {
                 .background(Color.blue)
                 .foregroundColor(.white)
                 .cornerRadius(12)
+                .pressEffect()
+                .transition(.scaleFade)
 
                 // Заголовок последних тренировок
                 Text("Последние тренировки")
                     .font(.headline)
+                    .transition(.slideFromTop)
 
                 // Мини-карточки последних 3 тренировок
                 ForEach(vm.recentWorkouts) { workout in
@@ -59,7 +69,12 @@ struct HomeView: View {
                     .padding()
                     .background(Color(.systemGray6))
                     .cornerRadius(12)
+                    .transition(.asymmetric(
+                        insertion: .scale.combined(with: .opacity),
+                        removal: .scale.combined(with: .opacity)
+                    ))
                 }
+                .animation(.spring(response: 0.5, dampingFraction: 0.8), value: vm.recentWorkouts.count)
 
                 Spacer()
             }
@@ -68,7 +83,7 @@ struct HomeView: View {
                 vm.fetchStats { totalCount, totalDuration, latestWorkouts in
                     DispatchQueue.main.async {
                         vm.totalWorkouts = totalCount
-                        vm.totalDuration = totalDuration
+                        vm.totalDuration = Int32(totalDuration)
                         vm.recentWorkouts = latestWorkouts
                     }
                 }

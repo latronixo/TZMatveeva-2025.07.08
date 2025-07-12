@@ -34,7 +34,7 @@ struct ProfileView: View {
                 vm.fetchStats { count, total in
                     DispatchQueue.main.async {
                         vm.totalWorkouts = count
-                        vm.totalDuration = total
+                        vm.totalDuration = Int32(total)
                     }
                 }
                 currentColorScheme = vm.selectedTheme.colorScheme
@@ -44,7 +44,7 @@ struct ProfileView: View {
                     vm.clearAllData { count, total in
                         DispatchQueue.main.async {
                             vm.totalWorkouts = count
-                            vm.totalDuration = total
+                            vm.totalDuration = Int32(total)
                         }
                     }
                 }
@@ -67,6 +67,7 @@ struct ProfileView: View {
 
     private var avatarSection: some View {
         let currentAvatar = vm.avatarData
+        let hasAvatar = currentAvatar != nil
         return PhotosPicker(selection: $selectedPhoto, matching: .images) {
             if let data = currentAvatar, let uiImage = UIImage(data: data) {
                 Image(uiImage: uiImage)
@@ -75,6 +76,8 @@ struct ProfileView: View {
                     .clipShape(Circle())
                     .overlay(Circle().stroke(Color.primary, lineWidth: 2))
                     .shadow(radius: 4)
+                    .scaleEffect(hasAvatar ? 1.0 : 0.9)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.8), value: hasAvatar)
             } else {
                 Circle()
                     .fill(Color.gray.opacity(0.3))
@@ -84,21 +87,30 @@ struct ProfileView: View {
                             .font(.title)
                             .foregroundColor(.gray)
                     )
+                    .scaleEffect(!hasAvatar ? 1.0 : 0.9)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.8), value: !hasAvatar)
             }
         }
+        .transition(.scaleFade)
     }
 
     private var avatarDeleteButton: some View {
         Group {
-            if vm.avatarData != nil {
+            let hasAvatar = vm.avatarData != nil
+            if hasAvatar {
                 Button(role: .destructive) {
-                    vm.clearAvatar()
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        vm.clearAvatar()
+                    }
                 } label: {
                     Image(systemName: "trash")
                         .foregroundColor(.red)
                 }
+                .pressEffect()
+                .transition(.scaleFade)
             }
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: vm.avatarData != nil)
     }
 
     private var statsSection: some View {
@@ -106,13 +118,17 @@ struct ProfileView: View {
             Text("Общая статистика")
                 .font(.headline)
             Text("Всего тренировок: \(vm.totalWorkouts)")
+                .transition(.slideFromLeft)
             Text("Общее время: \(vm.totalDurationFormatted)")
+                .transition(.slideFromLeft)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .shadow(radius: 2)
+        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalWorkouts)
+        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalDurationFormatted)
     }
 
     private var settingsSection: some View {
@@ -130,8 +146,11 @@ struct ProfileView: View {
             }
             Toggle("Звуки таймера", isOn: $vm.isSoundEnabled)
             Button("Очистить все данные", role: .destructive) {
-                showClearAlert = true
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    showClearAlert = true
+                }
             }
+            .pressEffect()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()

@@ -21,23 +21,31 @@ struct SportTimerApp: App {
                         Label("Home", systemImage: "house")
                     }
                     .tag(0)
+                    .transition(.slideFromRight)
+                
                 TimerView()
                     .tabItem {
                         Label("Timer", systemImage: "timer")
                     }
                     .tag(1)
+                    .transition(.slideFromRight)
+                
                 HistoryView()
                     .tabItem {
                         Label("History", systemImage: "clock.arrow.circlepath")
                     }
                     .tag(2)
+                    .transition(.slideFromRight)
+                
                 ProfileView()
                     .tabItem {
                         Label("Profile", systemImage: "person.crop.circle")
                     }
                     .tag(3)
+                    .transition(.slideFromRight)
             }
             .preferredColorScheme(settings.selectedTheme.colorScheme)
+            .animation(.spring(response: 0.6, dampingFraction: 0.8), value: selectedTab)
         }
     }
 }

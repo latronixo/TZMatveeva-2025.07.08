@@ -16,13 +16,19 @@ struct HistoryView: View {
                 TextField("Поиск", text: $vm.searchText)
                     .padding(.horizontal)
                     .textFieldStyle(.roundedBorder)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .top).combined(with: .opacity),
+                        removal: .move(edge: .top).combined(with: .opacity)
+                    ))
                 
                 // Фильтр по дням
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(HistoryViewModel.DateFilter.allCases, id: \.self) { filter in
                             Button(action: {
-                                vm.selectedDateFilter = filter
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                    vm.selectedDateFilter = filter
+                                }
                             }) {
                                 Text(filter.displayName)
                                     .font(.system(size: 14, weight: .medium))
@@ -40,11 +46,18 @@ struct HistoryView: View {
                                     )
                                     .cornerRadius(20)
                             }
+                            .scaleEffect(vm.selectedDateFilter == filter ? 1.05 : 1.0)
+                            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: vm.selectedDateFilter)
+                            .pressEffect()
                         }
                     }
                     .padding(.horizontal)
                 }
                 .padding(.vertical, 8)
+                .transition(.asymmetric(
+                    insertion: .move(edge: .top).combined(with: .opacity),
+                    removal: .move(edge: .top).combined(with: .opacity)
+                ))
                 
                 WrkoutsList(
                     dates: vm.dates,

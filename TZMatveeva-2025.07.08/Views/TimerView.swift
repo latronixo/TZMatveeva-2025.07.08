@@ -65,24 +65,37 @@ struct TimerView: View {
                             .frame(height: 150)
 
                             Button("OK") {
-                                withAnimation {
+                                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                                     vm.isEditingTime = false
                                     vm.remainingSeconds = vm.totalTime
                                 }
                             }
                             .buttonStyle(.borderedProminent)
                             .tint(.blue)
+                            .scaleEffect(vm.isEditingTime ? 1.0 : 0.9)
+                            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: vm.isEditingTime)
                         }
+                        .transition(.asymmetric(
+                            insertion: .scale.combined(with: .opacity),
+                            removal: .scale.combined(with: .opacity)
+                        ))
                     } else {
                         Text(vm.formattedTime)
                             .font(.system(size: 48, weight: .bold, design: .monospaced))
                             .onTapGesture {
                                 if !vm.isRunning {
-                                    vm.isEditingTime = true
+                                    withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                                        vm.isEditingTime = true
+                                    }
                                 }
                             }
+                            .transition(.asymmetric(
+                                insertion: .scale.combined(with: .opacity),
+                                removal: .scale.combined(with: .opacity)
+                            ))
                     }
                 }
+                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.isEditingTime)
 
 
                 ZStack {
@@ -92,10 +105,19 @@ struct TimerView: View {
 
                     Circle()
                         .trim(from: 0, to: vm.progress)
-                        .stroke(Color.blue, style: StrokeStyle(lineWidth: 20, lineCap: .round))
+                        .stroke(
+                            LinearGradient(
+                                colors: [.blue, .cyan],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            style: StrokeStyle(lineWidth: 20, lineCap: .round)
+                        )
                         .rotationEffect(.degrees(-90))
                         .frame(width: 200, height: 200)
-                        .animation(.easeInOut(duration: 0.2), value: vm.progress)
+                        .animation(.easeInOut(duration: 0.3), value: vm.progress)
+                        .scaleEffect(vm.isRunning ? 1.05 : 1.0)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: vm.isRunning)
                 }
 
                 Picker("Тип тренировки", selection: $vm.workoutType) {
@@ -111,34 +133,46 @@ struct TimerView: View {
 
                 HStack(spacing: 16) {
                     Button(vm.isRunning ? "Пауза/Стоп" : "Старт") {
-                        withAnimation {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
                             vm.isRunning ? vm.pause() : vm.start()
                         }
                     }
                     .scaleEffect(vm.isRunning ? 1.2 : 1)
-                    .animation(.spring(), value: vm.isRunning)
+                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: vm.isRunning)
                     .buttonStyle(.borderedProminent)
                     .tint(vm.isRunning ? .orange : .green)
+                    .pressEffect()
 
                     Button("Сброс") {
-                        vm.reset()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                            vm.reset()
+                        }
                     }
                     .buttonStyle(.bordered)
                     .tint(.red)
                     .disabled(vm.resetDisabled)
+                    .pressEffect()
 
                     Button("Сохранить") {
-                        vm.saveWorkout()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                            vm.saveWorkout()
+                        }
                     }
                     .buttonStyle(.bordered)
                     .tint(.blue)
                     .disabled(vm.saveDisabled)
+                    .pressEffect()
                 }
 
                 Spacer()
             }
             .padding()
             .navigationTitle("Таймер")
+        }
+        .overlay {
+            if vm.isLoading {
+                LoadingView()
+            }
         }
         .onAppear {
             vm.requestNotificationPermission()

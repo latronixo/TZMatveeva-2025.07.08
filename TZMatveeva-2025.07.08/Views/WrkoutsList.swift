@@ -22,12 +22,16 @@ struct WrkoutsList: View, @preconcurrency Equatable {
                         content: WorkoutRow.init
                     )
                     .onDelete { indexSet in
-                        deleteWorkouts(date, indexSet)
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            deleteWorkouts(date, indexSet)
+                        }
                     }
                 }
             }
         }
         .listStyle(.plain)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: dates)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8), value: groupedWorkouts)
     }
     
     static func == (lhs: WrkoutsList, rhs: WrkoutsList) -> Bool {
