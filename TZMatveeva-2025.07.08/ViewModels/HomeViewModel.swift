@@ -12,7 +12,7 @@ import CoreData
 struct WorkoutDTO: Identifiable {
     let id: UUID
     let type: String
-    let duration: Int
+    let duration: Int32
     let date: Date
     let notes: String?
     
@@ -23,7 +23,7 @@ struct WorkoutDTO: Identifiable {
     init(
         id: UUID = .init(),
         type: String,
-        duration: Int,
+        duration: Int32,
         date: Date = .now,
         notes: String?
     ) {
@@ -45,7 +45,7 @@ struct WorkoutDTO: Identifiable {
 
 final class HomeViewModel: ObservableObject {
     @Published var totalWorkouts = 0
-    @Published var totalDuration: Int = 0
+    @Published var totalDuration: Int32 = 0
     @Published var recentWorkouts: [WorkoutDTO] = []
 
     // Человекочитаемое форматирование длительности

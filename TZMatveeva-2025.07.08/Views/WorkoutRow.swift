@@ -27,20 +27,7 @@ struct WorkoutRow: View {
         }
         .padding(.vertical, 4)
     }
-    
-    func formatDuration(_ seconds: Int) -> String {
-        let formatter = DateComponentsFormatter()
-        formatter.zeroFormattingBehavior = .pad
 
-        if seconds >= 3600 {
-            formatter.allowedUnits = [.hour, .minute, .second]
-        } else {
-            formatter.allowedUnits = [.minute, .second]
-        }
-        formatter.unitsStyle = .positional
-        return formatter.string(from: TimeInterval(seconds)) ?? "00:00"
-    }
-    
     func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .short

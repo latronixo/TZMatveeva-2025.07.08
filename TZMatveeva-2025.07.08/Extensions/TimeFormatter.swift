@@ -8,7 +8,7 @@
 import Foundation
 
 struct TimeFormatter {
-    static func formatTime(_ seconds: Int) -> String {
+    static func formatTime(_ seconds: Int32) -> String {
         let formatter = DateComponentsFormatter()
         formatter.zeroFormattingBehavior = .pad
 

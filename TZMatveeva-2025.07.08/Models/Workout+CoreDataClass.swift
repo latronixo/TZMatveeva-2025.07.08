@@ -10,7 +10,7 @@ import CoreData
 class Workout: NSManagedObject, Identifiable {
     @NSManaged var id: UUID
     @NSManaged var type: String
-    @NSManaged var duration: Int
+    @NSManaged var duration: Int32
     @NSManaged var date: Date
     @NSManaged var notes: String?       
 }

@@ -16,6 +16,36 @@ struct HistoryView: View {
                 TextField("Поиск", text: $vm.searchText)
                     .padding(.horizontal)
                     .textFieldStyle(.roundedBorder)
+                
+                // Фильтр по дням
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(HistoryViewModel.DateFilter.allCases, id: \.self) { filter in
+                            Button(action: {
+                                vm.selectedDateFilter = filter
+                            }) {
+                                Text(filter.displayName)
+                                    .font(.system(size: 14, weight: .medium))
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
+                                    .background(
+                                        vm.selectedDateFilter == filter
+                                            ? Color.accentColor
+                                            : Color.gray.opacity(0.2)
+                                    )
+                                    .foregroundColor(
+                                        vm.selectedDateFilter == filter
+                                            ? .white
+                                            : .primary
+                                    )
+                                    .cornerRadius(20)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                .padding(.vertical, 8)
+                
                 WrkoutsList(
                     dates: vm.dates,
                     groupedWorkouts: vm.workouts,

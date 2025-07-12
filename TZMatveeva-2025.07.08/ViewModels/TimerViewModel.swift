@@ -125,7 +125,7 @@ final class TimerViewModel: ObservableObject {
         Task { @MainActor in
             let workout = WorkoutDTO(
                 type: workoutType.rawValue,
-                duration: totalTime - remainingSeconds,
+                duration: Int32(totalTime - remainingSeconds),
                 notes: notes
             )
             try await CoreDataStack.shared.saveWorkout(workout)

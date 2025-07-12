@@ -10,7 +10,7 @@ import Combine
 import SwiftUI
 
 final class ProfileViewModel: ObservableObject {
-    @Published var totalDuration: Int = 0
+    @Published var totalDuration: Int32 = 0
     @Published var totalWorkouts: Int = 0
 
     @Published var avatarData: Data?

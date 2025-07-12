@@ -13,7 +13,7 @@ import Combine
 struct WorkoutHistoryDTO: Identifiable, Equatable {
     let id: UUID
     let type: String
-    let duration: Int
+    let duration: Int32
     let date: Date
     let notes: String?
     
@@ -28,9 +28,25 @@ struct WorkoutHistoryDTO: Identifiable, Equatable {
 
 final class HistoryViewModel: ObservableObject {
     @Published var searchText: String = ""
+    @Published var selectedDateFilter: DateFilter = .all
     @Published var workouts: [String: [WorkoutHistoryDTO]] = [:]
     
     var dates: [String] { workouts.keys.sorted(by: >) }
+    
+    // Храним все тренировки для фильтрации
+    private var allWorkouts: [WorkoutHistoryDTO] = []
+    
+    enum DateFilter: String, CaseIterable {
+        case all = "Все"
+        case today = "Сегодня"
+        case yesterday = "Вчера"
+        case week = "Неделя"
+        case month = "Месяц"
+        
+        var displayName: String {
+            return self.rawValue
+        }
+    }
     
     private var cancellables: Set<AnyCancellable> = []
     private let coreData: CoreDataStack
@@ -41,7 +57,14 @@ final class HistoryViewModel: ObservableObject {
         $searchText
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] _ in
-                filterWorkouts(workouts.values.flatMap(\.self))
+                filterWorkouts()
+            }
+            .store(in: &cancellables)
+        
+        $selectedDateFilter
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] _ in
+                filterWorkouts()
             }
             .store(in: &cancellables)
     }
@@ -50,7 +73,8 @@ final class HistoryViewModel: ObservableObject {
     func fetchWorkouts() async {
         do {
             let workouts = try await coreData.fetchWorkouts()
-            self.filterWorkouts(workouts)
+            self.allWorkouts = workouts
+            self.filterWorkouts()
         } catch {
            // Handle error
         }
@@ -68,29 +92,52 @@ final class HistoryViewModel: ObservableObject {
             return
         }
         Task { @MainActor in
-            let indexToDelete = try await coreData
-                .deleteWorkouts(toDelete.map(\.id))
-                .compactMap { id in
-                    workouts[date]?.firstIndex{ $0.id == id }
-                }
-                
-            let set = IndexSet(indexToDelete)
-            workouts[date]?.remove(atOffsets: set)
-            filterWorkouts(workouts.values.flatMap(\.self))
+            try await coreData.deleteWorkouts(toDelete.map(\.id))
+            
+            // Удаляем из allWorkouts
+            allWorkouts.removeAll { workout in
+                toDelete.contains { $0.id == workout.id }
+            }
+            
+            // Переприменяем фильтры
+            filterWorkouts()
         }
     }
 
-    func filterWorkouts(_ workouts: [WorkoutHistoryDTO]) {
+    func filterWorkouts() {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // Фильтрация по дате
+        let dateFiltered = allWorkouts.filter { workout in
+            switch selectedDateFilter {
+            case .all:
+                return true
+            case .today:
+                return calendar.isDate(workout.date, inSameDayAs: now)
+            case .yesterday:
+                let yesterday = calendar.date(byAdding: .day, value: -1, to: now) ?? now
+                return calendar.isDate(workout.date, inSameDayAs: yesterday)
+            case .week:
+                let weekAgo = calendar.date(byAdding: .day, value: -7, to: now) ?? now
+                return workout.date >= weekAgo
+            case .month:
+                let monthAgo = calendar.date(byAdding: .month, value: -1, to: now) ?? now
+                return workout.date >= monthAgo
+            }
+        }
+        
+        // Фильтрация по поиску
         let base = searchText.isEmpty
-            ? workouts
-            : workouts.filter {
+            ? dateFiltered
+            : dateFiltered.filter {
                 $0.type.lowercased().contains(searchText.lowercased()) ||
                 $0.notes?.lowercased().contains(searchText.lowercased()) == true
             }
 
         // Группировка по дате (формат: yyyy-MM-dd)
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.dateFormat = "dd.MM.yyyy"
         self.workouts = Dictionary(grouping: base) { workout in
             formatter.string(from: workout.date)
         }
