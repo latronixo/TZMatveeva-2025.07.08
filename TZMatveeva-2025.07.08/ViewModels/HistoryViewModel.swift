@@ -13,7 +13,7 @@ import Combine
 struct WorkoutHistoryDTO: Identifiable, Equatable {
     let id: UUID
     let type: String
-    let duration: Int32
+    let duration: Int
     let date: Date
     let notes: String?
     

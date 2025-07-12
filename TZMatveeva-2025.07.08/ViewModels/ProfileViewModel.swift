@@ -93,6 +93,10 @@ final class ProfileViewModel: ObservableObject {
         let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "N/A"
         return "Версия \(version) (build \(build))"
     }
+    
+    var totalDurationFormatted: String {
+        TimeFormatter.formatTime(totalDuration)
+    }
 }
 
 

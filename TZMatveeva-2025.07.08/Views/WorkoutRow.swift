@@ -14,7 +14,7 @@ struct WorkoutRow: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(workout.type)
                 .font(.headline)
-            Text("Длительность: \(formatDuration(workout.duration))")
+            Text("Длительность: \(TimeFormatter.formatTime(workout.duration))")
                 .font(.subheadline)
             if let notes = workout.notes, !notes.isEmpty {
                 Text(notes)
@@ -28,13 +28,17 @@ struct WorkoutRow: View {
         .padding(.vertical, 4)
     }
     
-    func formatDuration(_ seconds: Int32) -> String {
-        let h = seconds / 3600
-        let m = (seconds % 3600) / 60
-        let s = seconds % 60
-        return h > 0
-            ? String(format: "%02d:%02d:%02d", h, m, s)
-            : String(format: "%02d:%02d", m, s)
+    func formatDuration(_ seconds: Int) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.zeroFormattingBehavior = .pad
+
+        if seconds >= 3600 {
+            formatter.allowedUnits = [.hour, .minute, .second]
+        } else {
+            formatter.allowedUnits = [.minute, .second]
+        }
+        formatter.unitsStyle = .positional
+        return formatter.string(from: TimeInterval(seconds)) ?? "00:00"
     }
     
     func formatDate(_ date: Date) -> String {

@@ -106,7 +106,7 @@ struct ProfileView: View {
             Text("Общая статистика")
                 .font(.headline)
             Text("Всего тренировок: \(vm.totalWorkouts)")
-            Text("Общее время: \(formatDuration(vm.totalDuration))")
+            Text("Общее время: \(vm.totalDurationFormatted)")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
@@ -154,15 +154,6 @@ struct ProfileView: View {
         .background(Color(.systemBackground))
         .cornerRadius(12)
         .shadow(radius: 2)
-    }
-
-    private func formatDuration(_ seconds: Int) -> String {
-        let h = seconds / 3600
-        let m = (seconds % 3600) / 60
-        let s = seconds % 60
-        return h > 0
-            ? String(format: "%02d:%02d:%02d", h, m, s)
-            : String(format: "%02d:%02d", m, s)
     }
 }
 

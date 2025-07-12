@@ -12,14 +12,18 @@ import CoreData
 struct WorkoutDTO: Identifiable {
     let id: UUID
     let type: String
-    let duration: Int32
+    let duration: Int
     let date: Date
     let notes: String?
     
+    var durationFormatted: String {
+        TimeFormatter.formatTime(duration)
+    }
+
     init(
         id: UUID = .init(),
         type: String,
-        duration: Int32,
+        duration: Int,
         date: Date = .now,
         notes: String?
     ) {
@@ -41,22 +45,16 @@ struct WorkoutDTO: Identifiable {
 
 final class HomeViewModel: ObservableObject {
     @Published var totalWorkouts = 0
-    @Published var totalDuration: Int32 = 0
+    @Published var totalDuration: Int = 0
     @Published var recentWorkouts: [WorkoutDTO] = []
 
-    /// Человекочитаемое форматирование длительности
+    // Человекочитаемое форматирование длительности
     var totalDurationFormatted: String {
-        let seconds = totalDuration
-        let h = seconds / 3600
-        let m = (seconds % 3600) / 60
-        let s = seconds % 60
-        return h > 0
-            ? String(format: "%02d:%02d:%02d", h, m, s)
-            : String(format: "%02d:%02d", m, s)
+        TimeFormatter.formatTime(totalDuration)
     }
 
-    /// Асинхронный fetch статистики из Core Data
-    func fetchStats(completion: @escaping (Int, Int32, [WorkoutDTO]) -> Void) {
+    // Асинхронный fetch статистики из Core Data
+    func fetchStats(completion: @escaping (Int, Int, [WorkoutDTO]) -> Void) {
         let context = CoreDataStack.shared.container.newBackgroundContext()
         context.perform {
             let request = NSFetchRequest<Workout>(entityName: "Workout")

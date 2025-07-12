@@ -125,7 +125,7 @@ final class TimerViewModel: ObservableObject {
         Task { @MainActor in
             let workout = WorkoutDTO(
                 type: workoutType.rawValue,
-                duration: Int32(totalTime - remainingSeconds),
+                duration: totalTime - remainingSeconds,
                 notes: notes
             )
             try await CoreDataStack.shared.saveWorkout(workout)
@@ -145,11 +145,7 @@ final class TimerViewModel: ObservableObject {
     }
 
     var formattedTime: String {
-        let h = remainingSeconds / 3600
-        let m = (remainingSeconds % 3600) / 60
-        let s = remainingSeconds % 60
-        return h > 0 ? String(format: "%02d:%02d:%02d", h, m, s)
-                     : String(format: "%02d:%02d", m, s)
+        TimeFormatter.formatTime(remainingSeconds)
     }
 
     var progress: Double {

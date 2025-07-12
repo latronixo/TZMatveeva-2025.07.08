@@ -47,7 +47,7 @@ struct HomeView: View {
                         VStack(alignment: .leading) {
                             Text(workout.type)
                                 .font(.subheadline.bold())
-                            Text("Длительность: \(formatDuration(workout.duration))")
+                            Text("Длительность: \(workout.durationFormatted)")
                                 .font(.footnote)
                                 .foregroundColor(.gray)
                         }
@@ -74,18 +74,6 @@ struct HomeView: View {
                 }
             }
         }
-    }
-}
-
-// Помогайка для форматирования длительности внутри View
-private extension HomeView {
-    func formatDuration(_ seconds: Int32) -> String {
-        let h = seconds / 3600
-        let m = (seconds % 3600) / 60
-        let s = seconds % 60
-        return h > 0
-            ? String(format: "%02d:%02d:%02d", h, m, s)
-            : String(format: "%02d:%02d", m, s)
     }
 }
 
