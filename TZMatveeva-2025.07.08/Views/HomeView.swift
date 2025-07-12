@@ -20,6 +20,7 @@ struct HomeView: View {
                             .font(AppFonts.title)
                             .foregroundColor(AppColors.textPrimary)
                             .transition(.slideFromTop)
+                            .padding(.horizontal, AppSpacing.standard)
 
                         HStack {
                             VStack(alignment: .leading, spacing: AppSpacing.small) {
@@ -32,12 +33,13 @@ struct HomeView: View {
                                     .foregroundColor(AppColors.textSecondary)
                                     .transition(.slideFromLeft)
                             }
+                            .padding(.horizontal, AppSpacing.standard)
+                            
                             Spacer()
                         }
                         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalWorkouts)
                         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: vm.totalDurationFormatted)
                     }
-                    .cardStyle()
                     .padding(.horizontal, AppSpacing.standard)
 
                     // Кнопка перехода к таймеру
